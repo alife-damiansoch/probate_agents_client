@@ -1,0 +1,207 @@
+.application-card {
+  position: relative;
+  cursor: pointer;
+}
+
+.application-badge-container {
+  position: absolute;
+  top: -5px;
+  right: 10px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+.badge-danger {
+  background-color: rgba(255, 0, 0, 0.2);
+  color: red;
+  border: 2px solid red;
+}
+
+.badge-success {
+  background-color: rgba(0, 255, 0, 0.2);
+  color: green;
+  border: 2px solid green;
+}
+.badge-warning {
+  background-color: rgba(255, 165, 0, 0.2);
+  color: orange;
+  border: 2px solid orange;
+}
+
+.badge-purple {
+  background-color: rgba(255, 111, 248, 0.2);
+  color: purple;
+  border: 2px solid purple;
+}
+
+.badge-blue {
+  background-color: rgba(117, 126, 245, 0.2);
+  color: blue;
+  border: 2px solid blue;
+}
+
+.input-icon-wrapper {
+  position: relative;
+}
+
+.input-icon-wrapper input {
+  padding-right: 50px; /* Ensure there's enough space for the icon inside the input */
+}
+
+.input-icon-wrapper .icon {
+  position: absolute;
+  top: -10%;
+  right: 10px;
+  transform: translateY(-50%);
+}
+
+/* TimeoutWarning.css */
+
+.timeout-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.timeout-warning-box {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.timer-display {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+  z-index: 1000;
+}
+.custom-offcanvas {
+  --bs-offcanvas-height: 50vh !important; /* Set the height you want */
+}
+
+/* bootstrap switch */
+.form-check-input {
+  width: 50px !important;
+  height: 25px !important;
+  background-color: #e0e0e0 !important;
+  border-radius: 15px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+}
+
+.form-check-input:checked {
+  background-color: #007bff !important;
+  border-color: #007bff !important;
+}
+
+.form-check-input:focus {
+  box-shadow: none !important;
+}
+
+.form-check-label {
+  margin-left: 10px !important;
+  font-size: 1.1rem !important;
+  color: #333 !important;
+}
+
+.form-check-input:checked + .form-check-label {
+  color: #007bff !important;
+}
+
+/* pagination component */
+.pagination-sm .page-link {
+  padding: 0.25rem 0.5rem; /* Smaller padding */
+  font-size: 0.75rem; /* Even smaller font size */
+}
+
+.pagination-sm .page-item.active .page-link {
+  background-color: #007bff; /* Active page background color */
+  border-color: #007bff; /* Active page border color */
+}
+
+.pagination-sm .page-item.disabled .page-link {
+  color: #6c757d; /* Disabled color */
+}
+
+/* stages component */
+.stage-component {
+  font-size: 0.75rem; /* Smaller text size */
+  margin-bottom: 0.25rem; /* Reduced bottom margin */
+}
+
+.stage-component .stage-icon {
+  font-size: 20px; /* Smaller icon size */
+  margin-bottom: 0.25rem; /* Small margin between icon and text */
+}
+
+/* Custom CSS for drop shadow on SVG icons */
+.icon-shadow {
+  filter: drop-shadow(
+    2px 2px 4px rgba(0, 0, 0, 0.5)
+  ); /* Adjust the shadow as needed */
+}
+
+/* Apply text shadow to all heading and paragraph tags */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1) !important; /* Adjust the shadow as needed */
+}
+
+/* APPLICATRION FILTERS STYLING*/
+.vertical-button {
+  position: fixed; /* Stick to the viewport */
+  top: 50%; /* Center vertically */
+  right: 10px; /* Align to the right edge */
+  transform: translateY(-50%); /* Adjust for perfect centering */
+  width: 30px; /* Slim width */
+  height: auto;
+  padding: 5px; /* Adjust padding */
+  background-color: #007bff; /* Blue background */
+  color: white; /* White text */
+  font-size: 12px; /* Smaller font for compact look */
+  font-weight: bold;
+  border: none; /* Remove border */
+  border-radius: 5px 0 0 5px; /* Rounded corners */
+  cursor: pointer; /* Pointer on hover */
+  writing-mode: vertical-rl; /* Vertical text */
+  text-orientation: mixed; /* Upright letters */
+  transition: all 0.3s ease; /* Smooth transitions */
+  z-index: 1000;
+}
+
+.vertical-button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+  color: #f8f9fa; /* Lighter text */
+}
+
+.vertical-button:focus {
+  outline: none;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.5); /* Glow effect */
+}
