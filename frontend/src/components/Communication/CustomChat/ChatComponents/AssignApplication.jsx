@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import {
   fetchData,
@@ -73,6 +73,10 @@ const AssignApplication = ({
 
   const assignApplicationHandler = async () => {
     setErrors(null);
+    if (!choosenApplicationIdToSet || choosenApplicationIdToSet === '') {
+      setErrors('Please select an application id');
+      return;
+    }
     try {
       setLoading(true);
       let endpoint = `/api/communications/update_application_id/${message_id}/`;
@@ -93,6 +97,7 @@ const AssignApplication = ({
           setChoosenApplicationIdToSet('');
         }
       } else {
+        console.log(res);
         setErrors(res.data);
       }
     } catch (error) {

@@ -1,4 +1,4 @@
-import  { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LoadingComponent from '../../GenericComponents/LoadingComponent';
 import Cookies from 'js-cookie';
 import { fetchData } from '../../GenericFunctions/AxiosGenericFunctions';
@@ -250,7 +250,7 @@ const Chat = ({
         className='card-body bg-info-subtle rounded text-dark-emphasis m-2 shadow p-2'
         style={{
           overflowY: 'auto',
-          maxHeight: 'calc(100vh - 300px)',
+          maxHeight: 'calc(100vh - 100px)',
         }}
         ref={messagesContainerRef}
       >

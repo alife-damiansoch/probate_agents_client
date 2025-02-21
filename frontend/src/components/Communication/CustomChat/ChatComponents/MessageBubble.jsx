@@ -7,6 +7,7 @@ import {
   patchData,
 } from '../../../GenericFunctions/AxiosGenericFunctions';
 import { MdOutlineReply } from 'react-icons/md';
+import { BsShieldExclamation } from 'react-icons/bs';
 import ReplyComponent from './ReplyComponent/ReplyComponent';
 import { RiEyeCloseLine, RiEyeFill } from 'react-icons/ri';
 import renderErrors from '../../../GenericFunctions/HelperGenericFunctions';
@@ -44,10 +45,15 @@ const MessageBubble = ({ message, refresh, setRefresh, application_id }) => {
 
     if (message) {
       if (!message.is_sent) {
-        newBubbleClass = 'bg-light';
-        shouldShowReplyIcon = true;
+        if (!message.application) {
+          newBubbleClass = 'bg-warning-subtle';
+          shouldShowReplyIcon = true;
+        } else {
+          newBubbleClass = 'bg-success-subtle';
+          shouldShowReplyIcon = true;
+        }
       } else {
-        newBubbleClass = 'bg-dark text-white ms-auto';
+        newBubbleClass = 'bg-light text-dark ms-auto';
         shouldShowReplyIcon = false;
       }
     }
@@ -141,8 +147,8 @@ const MessageBubble = ({ message, refresh, setRefresh, application_id }) => {
           !message.seen && 'border-2 border-danger bg-danger-subtle'
         }`}
         style={{
-          minWidth: '60%',
-          maxWidth: '80%',
+          minWidth: '80%',
+          maxWidth: '90%',
           wordBreak: 'break-word',
           fontSize: '0.8rem',
         }}
@@ -185,13 +191,13 @@ const MessageBubble = ({ message, refresh, setRefresh, application_id }) => {
         {/* Conditional rendering */}
         {sanitizedMessage && sanitizedMessage !== '' ? (
           <>
-            <div className='my-1 text-center h6'>
+            <div className='mb-1 mt-3  h4'>
               {message.subject && message.subject !== ''
                 ? message.subject
                 : 'No subject'}
             </div>
             <div
-              className='card-body my-0 pb-0 mx-0 px-0'
+              className='card-body my-0 pb-0 mx-0 px-0 text-start'
               dangerouslySetInnerHTML={{ __html: sanitizedMessage }}
             ></div>
             {message.attachments &&
@@ -254,7 +260,10 @@ const MessageBubble = ({ message, refresh, setRefresh, application_id }) => {
                     Application id: {message.application}
                   </span>
                 ) : (
-                  <span className='text-danger'>No application</span>
+                  <>
+                    <span className='text-danger me-2'>No application</span>
+                    <BsShieldExclamation size={30} color='red' />
+                  </>
                 )}
               </div>
               {showAssignApplication && (
