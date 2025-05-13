@@ -6,12 +6,25 @@ import SearchSummaryCard from '../../../GenericComponents/GlobalSearchSharedComp
 
 const ApplicationGlobalSearch = () => {
   const [searchResults, setSearchResults] = useState([]);
-  const [sortField, setSortField] = useState('');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [searchResultsIe, setSearchResultsIe] = useState([]);
+  const [searchResultsUk, setSearchResultsUk] = useState([]);
+
   const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmountIe, setTotalAmountIe] = useState(0);
+  const [totalAmountUk, setTotalAmountUk] = useState(0);
+
   const [allApplications, setAllApplications] = useState([]);
+  const [ieApplications, setIeApplications] = useState([]);
+  const [ukApplications, setUkApplications] = useState([]);
+
   const [totalAllApplicationsAmount, setTotalAllApplicationsAmount] =
     useState(0);
+  const [totalIeApplicationsAmount, setTotalIeApplicationsAmount] = useState(0);
+  const [totalUkApplicationsAmount, setTotalUkApplicationsAmount] = useState(0);
+
+  const [sortField, setSortField] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
+
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [solicitors, setSolicitors] = useState([]);
@@ -47,13 +60,36 @@ const ApplicationGlobalSearch = () => {
       setLoading(true);
       try {
         const response = await fetchData('token', `${searchConfig.endpoint}`);
+        console.log('RESULT', response.data);
+
+        //setAllApplications(response.data);
+        // Filter applications based on user country
         setAllApplications(response.data);
+        const ieApps = response.data.filter(
+          (app) => app.user?.country === 'IE'
+        );
+        const ukApps = response.data.filter(
+          (app) => app.user?.country === 'UK'
+        );
+        setIeApplications(ieApps);
+        setUkApplications(ukApps);
+
         // Calculate the total amount for all applications
         const totalAmountAllApps = response.data.reduce(
           (acc, app) => acc + (parseFloat(app.amount) || 0),
           0
         );
         setTotalAllApplicationsAmount(totalAmountAllApps);
+        const totalAmountIeApps = ieApps.reduce(
+          (acc, app) => acc + (parseFloat(app.amount) || 0),
+          0
+        );
+        setTotalIeApplicationsAmount(totalAmountIeApps);
+        const totalAmountUkApps = ukApps.reduce(
+          (acc, app) => acc + (parseFloat(app.amount) || 0),
+          0
+        );
+        setTotalUkApplicationsAmount(totalAmountUkApps);
       } catch (error) {
         console.error('Error fetching all applications:', error);
       }
@@ -99,18 +135,31 @@ const ApplicationGlobalSearch = () => {
       0
     );
     setTotalAmount(total);
+    const totalIe = searchResultsIe.reduce(
+      (acc, result) => acc + (parseFloat(result.amount) || 0),
+      0
+    );
+    setTotalAmountIe(totalIe);
+    const totalUk = searchResultsUk.reduce(
+      (acc, result) => acc + (parseFloat(result.amount) || 0),
+      0
+    );
+    setTotalAmountUk(totalUk);
   }, [searchResults]);
 
   // Handle search results
   const handleSearchResults = (results) => {
     setSearchResults(results);
+    setSearchResultsIe(results.filter((app) => app.user?.country === 'IE'));
+    setSearchResultsUk(results.filter((app) => app.user?.country === 'UK'));
   };
 
-  // Function to format the amount in euros
-  const formatAmount = (amount) => {
-    return new Intl.NumberFormat('de-DE', {
+  const formatAmount = (amount, currency = 'EUR') => {
+    const locale = currency === 'GBP' ? 'en-GB' : 'en-IE'; // use en-IE for EUR
+
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'EUR',
+      currency: currency,
     }).format(amount);
   };
 
@@ -201,10 +250,18 @@ const ApplicationGlobalSearch = () => {
       {searchResults.length > 0 && (
         <SearchSummaryCard
           allItems={allApplications}
+          ieItems={ieApplications}
+          ukItems={ukApplications}
           searchedItems={searchResults}
+          searchedItemsIe={searchResultsIe}
+          searchedItemsUk={searchResultsUk}
           totalAllItemsAmount={totalAllApplicationsAmount}
+          totatIeItemsAmount={totalIeApplicationsAmount}
+          totalUkItemsAmount={totalUkApplicationsAmount}
           totalAllItemsAmountWithFees={0}
           totalSearchedItemsAmount={totalAmount}
+          totalSearchedItemsAmountIe={totalAmountIe}
+          totalSearchedItemsAmountUk={totalAmountUk}
           totalSearchedItemsAmountWithFees={0}
           formatAmount={formatAmount}
           calculatePercentage={calculatePercentage}
@@ -252,9 +309,22 @@ const ApplicationGlobalSearch = () => {
                   <tr>
                     <td className=' py-0'>{result.id}</td>
 
-                    <td className=' py-0 '>{formatAmount(result.amount)}</td>
+                    <td className=' py-0 '>
+                      {formatAmount(
+                        result.amount,
+                        result?.user?.country === 'IE' ? 'EUR' : 'GBP'
+                      )}
+                    </td>
                     <td className=' py-0 '>{result.user?.name || 'N/A'}</td>
-                    <td className=' py-0'>{result.user?.country}</td>
+                    <td
+                      className={` py-0 ${
+                        result.user?.country === 'IE'
+                          ? ' bg-success-subtle'
+                          : 'bg-danger-subtle'
+                      }`}
+                    >
+                      {result.user?.country}
+                    </td>
                     <td className=' py-0'>
                       <button
                         className='btn btn-link'

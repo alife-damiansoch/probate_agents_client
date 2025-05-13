@@ -1,4 +1,4 @@
-import {useState, useEffect, Fragment} from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import GlobalSearchComponent from '../../../GenericComponents/GlobalSearchSharedComponents/GlobalSerchComponent';
 import { fetchData } from '../../../GenericFunctions/AxiosGenericFunctions';
 import LoadingComponent from '../../../GenericComponents/LoadingComponent';
@@ -7,16 +7,45 @@ import { formatDate } from '../../../GenericFunctions/HelperGenericFunctions';
 
 const AdvancementGlobalSearch = () => {
   const [searchResults, setSearchResults] = useState([]);
-  const [sortField, setSortField] = useState('');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [searchResultsIe, setSearchResultsIe] = useState([]);
+  const [searchResultsUk, setSearchResultsUk] = useState([]);
+
   const [totalAmountAgreed, setTotalAmountAgreed] = useState(0);
+  const [totalAmountAgreedIe, setTotalAmountAgreedIe] = useState(0);
+  const [totalAmountAgreedUk, setTotalAmountAgreedUk] = useState(0);
+
   const [totalAmountAgreedWithFees, setTotalAmountAgreedWithFees] = useState(0);
+  const [totalAmountAgreedWithFeesIe, setTotalAmountAgreedWithFeesIe] =
+    useState(0);
+  const [totalAmountAgreedWithFeesUk, setTotalAmountAgreedWithFeesUk] =
+    useState(0);
+
   const [allLoans, setAllLoans] = useState([]);
+  const [ieLoans, setIeLoans] = useState([]);
+  const [ukLoans, setUkLoans] = useState([]);
+
   const [totalAllLoansAmountAgreed, setTotalAllLoansAmountAgreed] = useState(0);
+  const [totalAllLoansAmountAgreedIe, setTotalAllLoansAmountAgreedIe] =
+    useState(0);
+  const [totalAllLoansAmountAgreedUk, setTotalAllLoansAmountAgreedUk] =
+    useState(0);
+
   const [
     totalAllLoansAmountAgreedWithFees,
     setTotalAllLoansAmountAgreedWithFees,
   ] = useState(0);
+  const [
+    totalAllLoansAmountAgreedWithFeesIe,
+    setTotalAllLoansAmountAgreedWithFeesIe,
+  ] = useState(0);
+  const [
+    totalAllLoansAmountAgreedWithFeesUk,
+    setTotalAllLoansAmountAgreedWithFeesUk,
+  ] = useState(0);
+
+  const [sortField, setSortField] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
+
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [solicitors, setSolicitors] = useState([]);
@@ -97,18 +126,55 @@ const AdvancementGlobalSearch = () => {
         const response = await fetchData('token', `${searchConfig.endpoint}`);
         setAllLoans(response.data);
 
+        // Filter loans based on the country
+        const ieLoans = response.data.filter(
+          (loan) => loan.application_details?.user?.country === 'IE'
+        );
+        console.log('IE Loans: ', ieLoans);
+        const ukLoans = response.data.filter(
+          (loan) => loan.application_details?.user?.country === 'UK'
+        );
+        console.log('UK Loans: ', ukLoans);
+        setIeLoans(ieLoans);
+        setUkLoans(ukLoans);
+
         // Calculate the total amount for all loans
         const totalAmountAllLoans = response.data.reduce(
           (acc, loan) => acc + (parseFloat(loan.amount_agreed) || 0),
           0
         );
         setTotalAllLoansAmountAgreed(totalAmountAllLoans);
+        // Calculate the total amount for all loans in IE
+        const totalAmountAllLoansIe = ieLoans.reduce(
+          (acc, loan) => acc + (parseFloat(loan.amount_agreed) || 0),
+          0
+        );
+        setTotalAllLoansAmountAgreedIe(totalAmountAllLoansIe);
+        // Calculate the total amount for all loans in UK
+        const totalAmountAllLoansUk = ukLoans.reduce(
+          (acc, loan) => acc + (parseFloat(loan.amount_agreed) || 0),
+          0
+        );
+        setTotalAllLoansAmountAgreedUk(totalAmountAllLoansUk);
+
         // Calculate the total amount for all loans with all fees
         const totalAmountAllLoansWithFees = response.data.reduce(
           (acc, loan) => acc + (parseFloat(loan.current_balance) || 0),
           0
         );
         setTotalAllLoansAmountAgreedWithFees(totalAmountAllLoansWithFees);
+        // Calculate the total amount for all loans in IE with all fees
+        const totalAmountAllLoansWithFeesIe = ieLoans.reduce(
+          (acc, loan) => acc + (parseFloat(loan.current_balance) || 0),
+          0
+        );
+        setTotalAllLoansAmountAgreedWithFeesIe(totalAmountAllLoansWithFeesIe);
+        // Calculate the total amount for all loans in UK with all fees
+        const totalAmountAllLoansWithFeesUk = ukLoans.reduce(
+          (acc, loan) => acc + (parseFloat(loan.current_balance) || 0),
+          0
+        );
+        setTotalAllLoansAmountAgreedWithFeesUk(totalAmountAllLoansWithFeesUk);
       } catch (error) {
         console.error('Error fetching all loans:', error);
       }
@@ -129,24 +195,59 @@ const AdvancementGlobalSearch = () => {
         0
       );
       setTotalAmountAgreed(total);
+      // Calculate total amount for IE loans
+      const totalIe = searchResultsIe?.reduce(
+        (acc, result) => acc + (parseFloat(result.amount_agreed) || 0),
+        0
+      );
+      setTotalAmountAgreedIe(totalIe);
+      // Calculate total amount for UK loans
+      const totalUk = searchResultsUk?.reduce(
+        (acc, result) => acc + (parseFloat(result.amount_agreed) || 0),
+        0
+      );
+      setTotalAmountAgreedUk(totalUk);
       const totalWithFees = searchResults.reduce(
         (acc, result) => acc + (parseFloat(result.current_balance) || 0),
         0
       );
       setTotalAmountAgreedWithFees(totalWithFees);
+      // Calculate total amount with fees for IE loans
+      const totalWithFeesIe = searchResultsIe.reduce(
+        (acc, result) => acc + (parseFloat(result.current_balance) || 0),
+        0
+      );
+      setTotalAmountAgreedWithFeesIe(totalWithFeesIe);
+      // Calculate total amount with fees for UK loans
+      const totalWithFeesUk = searchResultsUk.reduce(
+        (acc, result) => acc + (parseFloat(result.current_balance) || 0),
+        0
+      );
+      setTotalAmountAgreedWithFeesUk(totalWithFeesUk);
     }
   }, [searchResults]);
 
   // Handle search results
   const handleSearchResults = (results) => {
     setSearchResults(results);
+    setSearchResultsIe(
+      results.filter(
+        (result) => result.application_details?.user?.country === 'IE'
+      )
+    );
+    setSearchResultsUk(
+      results.filter(
+        (result) => result.application_details?.user?.country === 'UK'
+      )
+    );
   };
 
-  // Function to format the amount in euros
-  const formatAmount = (amount) => {
-    return new Intl.NumberFormat('de-DE', {
+  const formatAmount = (amount, currency = 'EUR') => {
+    const locale = currency === 'GBP' ? 'en-GB' : 'en-IE'; // use en-IE for EUR
+
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'EUR',
+      currency: currency,
     }).format(amount);
   };
 
@@ -247,11 +348,23 @@ const AdvancementGlobalSearch = () => {
       {searchResults.length > 0 && (
         <SearchSummaryCard
           allItems={allLoans}
+          ukItems={ukLoans}
+          ieItems={ieLoans}
           searchedItems={searchResults}
+          searchedItemsIe={searchResultsIe}
+          searchedItemsUk={searchResultsUk}
           totalAllItemsAmount={totalAllLoansAmountAgreed}
+          totatIeItemsAmount={totalAllLoansAmountAgreedIe}
+          totalUkItemsAmount={totalAllLoansAmountAgreedUk}
           totalAllItemsAmountWithFees={totalAllLoansAmountAgreedWithFees}
+          totalAllItemsAmountWithFeesIe={totalAllLoansAmountAgreedWithFeesIe}
+          totalAllItemsAmountWithFeesUk={totalAllLoansAmountAgreedWithFeesUk}
           totalSearchedItemsAmount={totalAmountAgreed}
+          totalSearchedItemsAmountIe={totalAmountAgreedIe}
+          totalSearchedItemsAmountUk={totalAmountAgreedUk}
           totalSearchedItemsAmountWithFees={totalAmountAgreedWithFees}
+          totalSearchedItemsAmountWithFeesIe={totalAmountAgreedWithFeesIe}
+          totalSearchedItemsAmountWithFeesUk={totalAmountAgreedWithFeesUk}
           formatAmount={formatAmount}
           calculatePercentage={calculatePercentage}
         />
@@ -261,7 +374,7 @@ const AdvancementGlobalSearch = () => {
       <div className='my-4'>
         <h2>Search Results</h2>
         {searchResults.length > 0 ? (
-          <table className='table table-bordered table-striped'>
+          <table className='table table-sm table-bordered table-striped'>
             <thead className='thead-dark'>
               <tr>
                 <th
@@ -303,13 +416,50 @@ const AdvancementGlobalSearch = () => {
                   <tr>
                     <td>{result.id}</td>
                     {result.maturity_date ? (
-                      <td>{formatDate(result.maturity_date)}</td>
+                      <td className='text-info'>
+                        {formatDate(result.maturity_date)}
+                      </td>
+                    ) : !result.is_paid_out ? (
+                      <td className=' text-warning'>
+                        <sub>Not paid out</sub>
+                      </td>
+                    ) : result.is_settled ? (
+                      <td className=' text-success'>
+                        {' '}
+                        <sub>Settled</sub>
+                      </td>
                     ) : (
-                      <td>-</td>
+                      <td className='text-danger'>
+                        {' '}
+                        <sub>Unknown</sub>
+                      </td>
                     )}
+                    {/* Conditional rendering for amount_agreed */}
 
-                    <td>{formatAmount(result.amount_agreed)}</td>
-                    <td>{formatAmount(result.current_balance)}</td>
+                    <td
+                      className={
+                        result?.country === 'IE'
+                          ? 'text-success'
+                          : 'text-danger'
+                      }
+                    >
+                      {formatAmount(
+                        result.amount_agreed,
+                        result?.country === 'IE' ? 'EUR' : 'GBP'
+                      )}
+                    </td>
+                    <td
+                      className={
+                        result?.country === 'IE'
+                          ? 'text-success'
+                          : 'text-danger'
+                      }
+                    >
+                      {formatAmount(
+                        result.current_balance,
+                        result?.country === 'IE' ? 'EUR' : 'GBP'
+                      )}
+                    </td>
                     <td>{result.application_details?.user?.name || 'N/A'}</td>
                     <td>
                       <button
