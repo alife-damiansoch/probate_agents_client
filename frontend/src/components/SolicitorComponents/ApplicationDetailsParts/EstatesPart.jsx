@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaTrash, FaEdit, FaSave } from 'react-icons/fa';
 import AutoResizingTextarea from './AutoResizingTextarea.jsx';
+import {EstateSummaryForApp} from "./EstateSummaryForApp.jsx";
 
 const EstatesPart = ({
   addItem,
@@ -186,6 +187,11 @@ const EstatesPart = ({
               </div>
             </div>
           )}
+           <EstateSummaryForApp
+          estates={application.estates}
+          requestedAmount={application.amount}
+          currency_sign={application.currency_sign}
+        />
         </div>
       </div>
     </>
