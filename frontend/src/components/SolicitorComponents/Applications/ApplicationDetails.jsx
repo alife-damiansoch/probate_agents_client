@@ -384,11 +384,11 @@ const ApplicationDetails = () => {
           </div>
         </div>
 
-        <ExpensesComponent
-          application={application}
-          applicationId={id}
-          existingExpenses={application.expenses}
-        />
+        {/*<ExpensesComponent*/}
+        {/*  application={application}*/}
+        {/*  applicationId={id}*/}
+        {/*  existingExpenses={application.expenses}*/}
+        {/*/>*/}
       </div>
 
       <div className='card rounded py-3 bg-info my-3'>
