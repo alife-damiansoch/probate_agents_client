@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MdAddChart } from 'react-icons/md';
-import { FaFileSignature } from 'react-icons/fa6';
-import { TbXboxX } from 'react-icons/tb';
 import Cookies from 'js-cookie';
+import React, { useEffect, useState } from 'react';
+import { FaFileSignature } from 'react-icons/fa6';
+import { MdAddChart } from 'react-icons/md';
+import { TbXboxX } from 'react-icons/tb';
+import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../../GenericComponents/DeleteConfirm/ConfirmModal';
+import { useConfirmation } from '../../GenericComponents/DeleteConfirm/UseConfirmationHook';
+import LoadingComponent from '../../GenericComponents/LoadingComponent';
+import Tooltip from '../../GenericComponents/Tooltip';
 import {
   deleteData,
   downloadFileAxios,
   fetchData,
 } from '../../GenericFunctions/AxiosGenericFunctions';
-import LoadingComponent from '../../GenericComponents/LoadingComponent';
 import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
-import Tooltip from '../../GenericComponents/Tooltip';
-import { useConfirmation } from '../../GenericComponents/DeleteConfirm/UseConfirmationHook';
-import ConfirmModal from '../../GenericComponents/DeleteConfirm/ConfirmModal';
 
-const DocumentsUpload = ({ applicationId, refresh, setRefresh }) => {
+const DocumentsUpload = ({ applicationId, refresh, setRefresh, user }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -24,6 +24,16 @@ const DocumentsUpload = ({ applicationId, refresh, setRefresh }) => {
   const [tooltipContent, setTooltipContent] = useState('');
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [currentHoveredDocId, setCurrentHoveredDocId] = useState(null); // Track which document is hovered
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if the user is an admin
+    if (user && user.is_superuser) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   const { confirmState, requestConfirmation, handleConfirm } =
     useConfirmation();
@@ -225,14 +235,15 @@ const DocumentsUpload = ({ applicationId, refresh, setRefresh }) => {
                   >
                     {doc.original_name}
                   </span>
-
-                  <i
-                    className='ms-2 text-danger'
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleDeleteClick(doc)}
-                  >
-                    <TbXboxX className='mb-4 icon-shadow' size={30} />
-                  </i>
+                  {isAdmin && (
+                    <i
+                      className='ms-2 text-danger'
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleDeleteClick(doc)}
+                    >
+                      <TbXboxX className='mb-4 icon-shadow' size={30} />
+                    </i>
+                  )}
                 </p>
                 {/* Show Tooltip only for the hovered document */}
                 {currentHoveredDocId === doc.id && (
