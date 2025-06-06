@@ -1,7 +1,7 @@
-import { FaEdit, FaSave } from 'react-icons/fa';
-import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
 import { useEffect, useState } from 'react';
+import { FaEdit, FaSave } from 'react-icons/fa';
 import { patchData } from '../../GenericFunctions/AxiosGenericFunctions';
+import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
 import ApplicantsPart from './ApplicantsPart';
 import EstatesPart from './EstatesPart';
 
@@ -11,12 +11,23 @@ const RequiredDetailsPart = ({
   id,
   refresh,
   setRefresh,
+  user,
 }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [editMode, setEditMode] = useState({});
   const [triggerHandleChange, setTriggerChandleChange] = useState(false);
   const [originalApplication, setOriginalApplication] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if the user is an admin
+    if (user && user.is_superuser) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   // Initialize the original application state when the component mounts
   useEffect(() => {
@@ -27,8 +38,15 @@ const RequiredDetailsPart = ({
   }, []);
 
   const getFilteredApplicationData = (application) => {
-    const { amount, term, deceased, dispute, applicants, estates } =
-      application;
+    const {
+      amount,
+      term,
+      deceased,
+      dispute,
+      applicants,
+      estates,
+      was_will_prepared_by_solicitor,
+    } = application;
 
     return {
       amount,
@@ -52,6 +70,7 @@ const RequiredDetailsPart = ({
         description,
         value,
       })),
+      was_will_prepared_by_solicitor, // Include this field
     };
   };
 
@@ -200,7 +219,9 @@ const RequiredDetailsPart = ({
                           toggleEditMode('amount');
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode.amount ? (
@@ -235,7 +256,9 @@ const RequiredDetailsPart = ({
                           toggleEditMode('term');
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode.term ? (
@@ -274,7 +297,9 @@ const RequiredDetailsPart = ({
                           toggleEditMode('deceased_first_name');
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode.deceased_first_name ? (
@@ -310,7 +335,9 @@ const RequiredDetailsPart = ({
                           toggleEditMode('deceased_last_name');
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode.deceased_last_name ? (
@@ -319,6 +346,88 @@ const RequiredDetailsPart = ({
                           <FaEdit size={20} />
                         )}
                       </button>
+                    </div>
+                  </div>
+                </div>
+
+                <hr />
+                <div
+                  className={`row mb-3 mx-2 p-2 rounded align-items-center ${
+                    application.was_will_prepared_by_solicitor
+                      ? 'bg-success-subtle'
+                      : 'bg-danger-subtle'
+                  }`}
+                >
+                  <div className='col-12'>
+                    <div className='d-flex align-items-center gap-3'>
+                      <label
+                        className='form-label mb-0'
+                        style={{ minWidth: 320 }}
+                      >
+                        Was this will professionally prepared by a solicitor?
+                      </label>
+                      <div className='form-check form-check-inline mb-0'>
+                        <input
+                          className='form-check-input'
+                          type='radio'
+                          name='was_will_prepared_by_solicitor'
+                          id='will_prepared_yes'
+                          value={true}
+                          checked={!!application.was_will_prepared_by_solicitor}
+                          onChange={() => {
+                            setApplication({
+                              ...application,
+                              was_will_prepared_by_solicitor: true,
+                            });
+                            setTriggerChandleChange(!triggerHandleChange);
+                          }}
+                          disabled={
+                            application.approved ||
+                            application.is_rejected ||
+                            !isAdmin
+                          }
+                        />
+                        <label
+                          className='form-check-label'
+                          htmlFor='will_prepared_yes'
+                          style={{
+                            marginLeft: 4,
+                            marginRight: 16,
+                            fontWeight: 500,
+                          }}
+                        >
+                          Yes
+                        </label>
+                      </div>
+                      <div className='form-check form-check-inline mb-0'>
+                        <input
+                          className='form-check-input'
+                          type='radio'
+                          name='was_will_prepared_by_solicitor'
+                          id='will_prepared_no'
+                          value={false}
+                          checked={!application.was_will_prepared_by_solicitor}
+                          onChange={() => {
+                            setApplication({
+                              ...application,
+                              was_will_prepared_by_solicitor: false,
+                            });
+                            setTriggerChandleChange(!triggerHandleChange);
+                          }}
+                          disabled={
+                            application.approved ||
+                            application.is_rejected ||
+                            !isAdmin
+                          }
+                        />
+                        <label
+                          className='form-check-label'
+                          htmlFor='will_prepared_no'
+                          style={{ marginLeft: 4, fontWeight: 500 }}
+                        >
+                          No
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -353,7 +462,9 @@ const RequiredDetailsPart = ({
                           toggleEditMode('dispute_details');
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode.dispute_details ? (
@@ -378,6 +489,7 @@ const RequiredDetailsPart = ({
               removeItem={removeItem}
               triggerHandleChange={triggerHandleChange}
               setTriggerChandleChange={setTriggerChandleChange}
+              isAdmin={isAdmin}
             />
             <EstatesPart
               addItem={addItem}
@@ -389,6 +501,7 @@ const RequiredDetailsPart = ({
               removeItem={removeItem}
               triggerChandleChange={triggerHandleChange}
               setTriggerChandleChange={setTriggerChandleChange}
+              isAdmin={isAdmin}
             />
           </form>
         </div>

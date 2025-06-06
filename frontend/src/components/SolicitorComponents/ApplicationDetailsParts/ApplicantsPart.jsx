@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaTrash, FaEdit, FaSave } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTrash } from 'react-icons/fa';
 import LoadingComponent from '../../GenericComponents/LoadingComponent';
 
 const ApplicantsPart = ({
@@ -12,6 +12,7 @@ const ApplicantsPart = ({
   removeItem,
   triggerHandleChange,
   setTriggerChandleChange,
+  isAdmin = false,
 }) => {
   const [newApplicant, setNewApplicant] = useState({
     title: '',
@@ -107,7 +108,9 @@ const ApplicantsPart = ({
                           toggleEditMode(`applicant_${index}_title`);
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode[`applicant_${index}_title`] ? (
@@ -142,7 +145,9 @@ const ApplicantsPart = ({
                           toggleEditMode(`applicant_${index}_first_name`);
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode[`applicant_${index}_first_name`] ? (
@@ -177,7 +182,9 @@ const ApplicantsPart = ({
                           toggleEditMode(`applicant_${index}_last_name`);
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode[`applicant_${index}_last_name`] ? (
@@ -212,7 +219,9 @@ const ApplicantsPart = ({
                           toggleEditMode(`applicant_${index}_pps_number`);
                         }}
                         disabled={
-                          application.approved || application.is_rejected
+                          application.approved ||
+                          application.is_rejected ||
+                          !isAdmin
                         }
                       >
                         {editMode[`applicant_${index}_pps_number`] ? (
@@ -228,7 +237,11 @@ const ApplicantsPart = ({
                       type='button'
                       className='btn btn-sm btn-outline-danger mt-2 border-0'
                       onClick={() => removeItem('applicants', index)}
-                      disabled={application.approved || application.is_rejected}
+                      disabled={
+                        application.approved ||
+                        application.is_rejected ||
+                        !isAdmin
+                      }
                     >
                       <FaTrash size={15} className='icon-shadow' />
                     </button>
@@ -237,7 +250,7 @@ const ApplicantsPart = ({
               ))}
               {/* Add New Applicant Form */}
               <hr />
-              {!application.approved && !application.is_rejected && (
+              {!application.approved && !application.is_rejected && isAdmin && (
                 <div className='row bg-warning  rounded mx-md-5 px-md-2 shadow'>
                   <div className='col-md-11   border-0 bg-warning'>
                     <div className='card-body '>

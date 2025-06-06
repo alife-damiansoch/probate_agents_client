@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { FaTrash, FaEdit, FaSave } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTrash } from 'react-icons/fa';
 import AutoResizingTextarea from './AutoResizingTextarea.jsx';
-import {EstateSummaryForApp} from "./EstateSummaryForApp.jsx";
+import { EstateSummaryForApp } from './EstateSummaryForApp.jsx';
 
 const EstatesPart = ({
   addItem,
@@ -13,6 +13,7 @@ const EstatesPart = ({
   removeItem,
   triggerChandleChange,
   setTriggerChandleChange,
+  isAdmin = false,
 }) => {
   const [newEstate, setNewEstate] = useState({
     description: '',
@@ -87,7 +88,11 @@ const EstatesPart = ({
                         submitChangesHandler();
                       toggleEditMode(`estate_${index}_description`);
                     }}
-                    disabled={application.approved || application.is_rejected}
+                    disabled={
+                      application.approved ||
+                      application.is_rejected ||
+                      !isAdmin
+                    }
                   >
                     {editMode[`estate_${index}_description`] ? (
                       <FaSave size={20} color='red' />
@@ -123,7 +128,11 @@ const EstatesPart = ({
                         submitChangesHandler();
                       toggleEditMode(`estate_${index}_value`);
                     }}
-                    disabled={application.approved || application.is_rejected}
+                    disabled={
+                      application.approved ||
+                      application.is_rejected ||
+                      !isAdmin
+                    }
                   >
                     {editMode[`estate_${index}_value`] ? (
                       <FaSave size={20} color='red' />
@@ -138,7 +147,9 @@ const EstatesPart = ({
                   type='button'
                   className='btn btn-sm btn-outline-danger mt-2 border-0 icon-shadow'
                   onClick={() => removeItem('estates', index)}
-                  disabled={application.approved || application.is_rejected}
+                  disabled={
+                    application.approved || application.is_rejected || !isAdmin
+                  }
                 >
                   <FaTrash size={15} />
                 </button>
@@ -147,7 +158,7 @@ const EstatesPart = ({
           ))}
           {/* Add New Estate Form */}
           <hr />
-          {!application.approved && !application.is_rejected && (
+          {!application.approved && !application.is_rejected && isAdmin && (
             <div className='row bg-warning rounded mx-md-5 px-md-2 shadow'>
               <div className='card-body'>
                 <h4 className='card-subtitle text-black'>Add Estate</h4>
@@ -157,7 +168,7 @@ const EstatesPart = ({
                   <label className='form-label col-12'>Description:</label>
                   <AutoResizingTextarea
                     value={newEstate.description}
-                    onChange={e => handleNewEstateChange(e, 'description')}
+                    onChange={(e) => handleNewEstateChange(e, 'description')}
                     readOnly={false}
                     className={`shadow ${getFieldClassName('description')}`}
                   />
@@ -187,11 +198,11 @@ const EstatesPart = ({
               </div>
             </div>
           )}
-           <EstateSummaryForApp
-          estates={application.estates}
-          requestedAmount={application.amount}
-          currency_sign={application.currency_sign}
-        />
+          <EstateSummaryForApp
+            estates={application.estates}
+            requestedAmount={application.amount}
+            currency_sign={application.currency_sign}
+          />
         </div>
       </div>
     </>

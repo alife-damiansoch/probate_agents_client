@@ -1,27 +1,26 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { MdDoneAll } from 'react-icons/md';
 import { TbFaceIdError } from 'react-icons/tb';
-import DeleteApplication from './DeleteApplication';
 import BackToApplicationsIcon from '../../GenericComponents/BackToApplicationsIcon';
+import DeleteApplication from './DeleteApplication';
 import DocumentsUpload from './DocumentsUpload';
-import ExpensesComponent from './ExpensesComponent';
 
+import Cookies from 'js-cookie';
+import { useSelector } from 'react-redux';
+import LoadingComponent from '../../GenericComponents/LoadingComponent';
+import OffcanvasComponent from '../../GenericComponents/OffcanvasComponent';
 import {
   fetchData,
   patchData,
 } from '../../GenericFunctions/AxiosGenericFunctions';
-import Cookies from 'js-cookie';
-import RequiredDetailsPart from '../ApplicationDetailsParts/RequiredDetailsPart';
-import LoadingComponent from '../../GenericComponents/LoadingComponent';
-import OffcanvasComponent from '../../GenericComponents/OffcanvasComponent';
 import renderErrors, {
   formatDate,
 } from '../../GenericFunctions/HelperGenericFunctions';
-import SolicitorPart from '../ApplicationDetailsParts/SolicitorPart';
 import RejectionForm from '../ApplicationDetailsParts/RejectionForm';
-import { useSelector } from 'react-redux';
+import RequiredDetailsPart from '../ApplicationDetailsParts/RequiredDetailsPart';
+import SolicitorPart from '../ApplicationDetailsParts/SolicitorPart';
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -367,15 +366,17 @@ const ApplicationDetails = () => {
           id={id}
           refresh={refresh}
           setRefresh={setRefresh}
+          user={user}
         />
 
         <DocumentsUpload
           applicationId={id}
           refresh={refresh}
           setRefresh={setRefresh}
+          user={user}
         />
       </div>
-      <div className='card rounded bg-dark-subtle border-0 shadow mt-4 shadow'>
+      {/* <div className='card rounded bg-dark-subtle border-0 shadow mt-4 shadow'>
         <div className='card-header my-2'>
           <div className='row '>
             <h3 className='card-subtitle text-info-emphasis'>
@@ -384,12 +385,12 @@ const ApplicationDetails = () => {
           </div>
         </div>
 
-        {/*<ExpensesComponent*/}
-        {/*  application={application}*/}
-        {/*  applicationId={id}*/}
-        {/*  existingExpenses={application.expenses}*/}
-        {/*/>*/}
-      </div>
+        <ExpensesComponent
+          application={application}
+          applicationId={id}
+          existingExpenses={application.expenses}
+        />
+      </div> */}
 
       <div className='card rounded py-3 bg-info my-3'>
         <div className='row text-center'>
