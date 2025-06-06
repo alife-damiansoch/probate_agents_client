@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FaTrash, FaEdit, FaSave } from 'react-icons/fa';
+import AutoResizingTextarea from './AutoResizingTextarea.jsx';
 
 const EstatesPart = ({
   addItem,
@@ -66,17 +67,16 @@ const EstatesPart = ({
               <div className='col-md-8'>
                 <label className='form-label col-12'>Description:</label>
                 <div className='input-group input-group-sm shadow'>
-                  <input
-                    type='text'
-                    className={`form-control ${
-                      editMode[`estate_${index}_description`] &&
-                      ' bg-warning-subtle'
-                    }`}
+                  <AutoResizingTextarea
                     value={estate.description}
                     onChange={(e) =>
                       handleListChange(e, index, 'estates', 'description')
                     }
                     readOnly={!editMode[`estate_${index}_description`]}
+                    className={`form-control ${
+                      editMode[`estate_${index}_description`] &&
+                      ' bg-warning-subtle'
+                    }`}
                   />
                   <button
                     type='button'
@@ -154,11 +154,11 @@ const EstatesPart = ({
               <div className='row mb-3'>
                 <div className='col-md-8'>
                   <label className='form-label col-12'>Description:</label>
-                  <input
-                    type='text'
-                    className={`shadow ${getFieldClassName('description')}`}
+                  <AutoResizingTextarea
                     value={newEstate.description}
-                    onChange={(e) => handleNewEstateChange(e, 'description')}
+                    onChange={e => handleNewEstateChange(e, 'description')}
+                    readOnly={false}
+                    className={`shadow ${getFieldClassName('description')}`}
                   />
                 </div>
                 <div className='col-md-3'>
