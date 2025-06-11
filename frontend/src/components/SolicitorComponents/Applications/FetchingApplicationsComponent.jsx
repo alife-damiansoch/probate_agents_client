@@ -1,12 +1,12 @@
-import  { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import { fetchData } from '../../GenericFunctions/AxiosGenericFunctions';
-import Applications from './Applications';
+import { useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import BootstrapSwitch from '../../GenericComponents/BootstrapSwitch';
 import LoadingComponent from '../../GenericComponents/LoadingComponent';
 import PaginationComponent from '../../GenericComponents/PaginationComponent';
-import BootstrapSwitch from '../../GenericComponents/BootstrapSwitch';
-import { v4 as uuidv4 } from 'uuid';
+import { fetchData } from '../../GenericFunctions/AxiosGenericFunctions';
 import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
+import Applications from './Applications';
 import IdAndApplicantsFilter from './FilterringApplication/IdAndApplicantsFilter';
 
 const FetchingApplicationsComponent = () => {
@@ -152,27 +152,23 @@ const FetchingApplicationsComponent = () => {
         <>
           <div className='row my-5 '>
             <div className='col-12 col-md-6 text-center'>
-              <div className=' col-auto bg-info-subtle rounded-pill p-3 mx-auto shadow'>
-                <BootstrapSwitch
-                  isChecked={showAssignedApplicationsOnly}
-                  setIsChecked={setShowAssingedApplicationsOnly}
-                  isCheckedMessage='Assigned only'
-                  isNotCheckedMessage='Assinged and not assigned'
-                  my_id={uuidv4()}
-                />
-              </div>
+              <BootstrapSwitch
+                isChecked={showAssignedApplicationsOnly}
+                setIsChecked={setShowAssingedApplicationsOnly}
+                isCheckedMessage='Assigned only'
+                isNotCheckedMessage='Assinged and not assigned'
+                my_id={uuidv4()}
+              />
             </div>
             {lastPartOfUrl !== 'applications_PaidOut_notSettled' && (
               <div className='col-12 col-md-6 text-center mt-2 mt-md-0'>
-                <div className=' col-auto bg-info-subtle rounded-pill p-3 mx-auto shadow'>
-                  <BootstrapSwitch
-                    isChecked={orderNewToOld}
-                    setIsChecked={setOrderNewToOld}
-                    isCheckedMessage='New  first'
-                    isNotCheckedMessage='Old  first'
-                    my_id={uuidv4()}
-                  />
-                </div>
+                <BootstrapSwitch
+                  isChecked={orderNewToOld}
+                  setIsChecked={setOrderNewToOld}
+                  isCheckedMessage='New  first'
+                  isNotCheckedMessage='Old  first'
+                  my_id={uuidv4()}
+                />
               </div>
             )}
           </div>

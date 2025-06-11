@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { FaEdit, FaSave } from 'react-icons/fa';
 import { patchData } from '../../GenericFunctions/AxiosGenericFunctions';
 import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
 import ApplicantsPart from './ApplicantsPart';
@@ -66,10 +65,7 @@ const RequiredDetailsPart = ({
           pps_number,
         })
       ),
-      estates: estates.map(({ description, value }) => ({
-        description,
-        value,
-      })),
+
       was_will_prepared_by_solicitor, // Include this field
     };
   };
@@ -169,344 +165,677 @@ const RequiredDetailsPart = ({
       setRefresh(!refresh);
     }
   };
+
   useEffect(() => {
     submitChangesHandler();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerHandleChange]);
 
+  // Updated formatCurrency function to use application.currency_sign
+  const formatCurrency = (amount) => {
+    if (!application || !application.currency_sign) {
+      return `$${Number(amount).toFixed(2)}`;
+    }
+    return `${application.currency_sign}${Number(amount).toFixed(2)}`;
+  };
+
+  const getEditIcon = (field) => {
+    const isEditing = editMode[field];
+    const isDisabled =
+      application.approved || application.is_rejected || !isAdmin;
+
+    if (isDisabled) {
+      return (
+        <svg width='16' height='16' fill='#9ca3af' viewBox='0 0 20 20'>
+          <path
+            fillRule='evenodd'
+            d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
+            clipRule='evenodd'
+          />
+        </svg>
+      );
+    }
+
+    if (isEditing) {
+      return (
+        <svg width='16' height='16' fill='#059669' viewBox='0 0 20 20'>
+          <path
+            fillRule='evenodd'
+            d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+            clipRule='evenodd'
+          />
+        </svg>
+      );
+    }
+
+    return (
+      <svg width='16' height='16' fill='#6b7280' viewBox='0 0 20 20'>
+        <path d='M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z' />
+      </svg>
+    );
+  };
+
   return (
-    <>
-      {errorMessage && (
-        <div
-          className={` col-8 mx-auto alert text-center ${
-            isError ? 'alert-warning text-danger' : 'alert-success text-success'
-          }`}
-          role='alert'
-        >
-          {renderErrors(errorMessage)}
-        </div>
-      )}
-      <div className='card rounded border-0 bg-dark-subtle '>
-        <div className='card-header  text-info-emphasis  '>
-          <h3>Details</h3>
-        </div>
-        <div className='card-body bg-dark-subtle'>
-          <form>
-            <div className='card rounded  border-0 shadow'>
-              <div className='card-body'>
-                <div className='row mb-3'>
-                  <div className='col-md-6'>
-                    <label className='form-label col-12'>Amount:</label>
-                    <div className='input-group input-group-sm'>
-                      <input
-                        type='text'
-                        className={`form-control shadow ${
-                          editMode.amount && ' bg-warning-subtle'
-                        }`}
-                        value={
-                          editMode.amount
-                            ? application.amount
-                            : `${application.currency_sign} ${application.amount}`
-                        }
-                        onChange={(e) => handleChange(e, 'amount')}
-                        readOnly={!editMode.amount}
-                      />
-                      <button
-                        type='button'
-                        className='btn btn-dark  shadow'
-                        onClick={() => {
-                          if (editMode.amount) submitChangesHandler();
-                          toggleEditMode('amount');
-                        }}
-                        disabled={
-                          application.approved ||
-                          application.is_rejected ||
-                          !isAdmin
-                        }
-                      >
-                        {editMode.amount ? (
-                          <FaSave size={20} color='red' />
-                        ) : (
-                          <FaEdit size={20} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className='col-md-6'>
-                    <label className='form-label col-12'>Term:</label>
-                    <div className='input-group input-group-sm'>
-                      <input
-                        type='text'
-                        className={`form-control  shadow ${
-                          editMode.term && ' bg-warning-subtle'
-                        }`}
-                        value={
-                          editMode.term
-                            ? application.term
-                            : `${application.term} months`
-                        }
-                        onChange={(e) => handleChange(e, 'term')}
-                        readOnly={!editMode.term}
-                      />
-                      <button
-                        type='button'
-                        className='btn  btn-dark  shadow'
-                        onClick={() => {
-                          if (editMode.term) submitChangesHandler();
-                          toggleEditMode('term');
-                        }}
-                        disabled={
-                          application.approved ||
-                          application.is_rejected ||
-                          !isAdmin
-                        }
-                      >
-                        {editMode.term ? (
-                          <FaSave size={20} color='red' />
-                        ) : (
-                          <FaEdit size={20} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <hr />
-                <div className='row mb-3'>
-                  <div className='col-md-6'>
-                    <label className='form-label col-12'>
-                      Deceased First Name:
-                    </label>
-                    <div className='input-group input-group-sm shadow'>
-                      <input
-                        type='text'
-                        className={`form-control ${
-                          editMode.deceased_first_name && ' bg-warning-subtle'
-                        }`}
-                        value={application.deceased.first_name}
-                        onChange={(e) =>
-                          handleNestedChange(e, 'deceased', 'first_name')
-                        }
-                        readOnly={!editMode.deceased_first_name}
-                      />
-                      <button
-                        type='button'
-                        className='btn  btn-dark'
-                        onClick={() => {
-                          if (editMode.deceased_first_name)
-                            submitChangesHandler();
-                          toggleEditMode('deceased_first_name');
-                        }}
-                        disabled={
-                          application.approved ||
-                          application.is_rejected ||
-                          !isAdmin
-                        }
-                      >
-                        {editMode.deceased_first_name ? (
-                          <FaSave size={20} color='red' />
-                        ) : (
-                          <FaEdit size={20} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className='col-md-6'>
-                    <label className='form-label col-12'>
-                      Deceased Last Name:
-                    </label>
-                    <div className='input-group input-group-sm  shadow'>
-                      <input
-                        type='text'
-                        className={`form-control ${
-                          editMode.deceased_last_name && ' bg-warning-subtle'
-                        }`}
-                        value={application.deceased.last_name}
-                        onChange={(e) =>
-                          handleNestedChange(e, 'deceased', 'last_name')
-                        }
-                        readOnly={!editMode.deceased_last_name}
-                      />
-                      <button
-                        type='button'
-                        className='btn btn-dark'
-                        onClick={() => {
-                          if (editMode.deceased_last_name)
-                            submitChangesHandler();
-                          toggleEditMode('deceased_last_name');
-                        }}
-                        disabled={
-                          application.approved ||
-                          application.is_rejected ||
-                          !isAdmin
-                        }
-                      >
-                        {editMode.deceased_last_name ? (
-                          <FaSave size={20} color='red' />
-                        ) : (
-                          <FaEdit size={20} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <hr />
-                <div
-                  className={`row mb-3 mx-2 p-2 rounded align-items-center ${
-                    application.was_will_prepared_by_solicitor
-                      ? 'bg-success-subtle'
-                      : 'bg-danger-subtle'
-                  }`}
-                >
-                  <div className='col-12'>
-                    <div className='d-flex align-items-center gap-3'>
-                      <label
-                        className='form-label mb-0'
-                        style={{ minWidth: 320 }}
-                      >
-                        Was this will professionally prepared by a solicitor?
-                      </label>
-                      <div className='form-check form-check-inline mb-0'>
-                        <input
-                          className='form-check-input'
-                          type='radio'
-                          name='was_will_prepared_by_solicitor'
-                          id='will_prepared_yes'
-                          value={true}
-                          checked={!!application.was_will_prepared_by_solicitor}
-                          onChange={() => {
-                            setApplication({
-                              ...application,
-                              was_will_prepared_by_solicitor: true,
-                            });
-                            setTriggerChandleChange(!triggerHandleChange);
-                          }}
-                          disabled={
-                            application.approved ||
-                            application.is_rejected ||
-                            !isAdmin
-                          }
-                        />
-                        <label
-                          className='form-check-label'
-                          htmlFor='will_prepared_yes'
-                          style={{
-                            marginLeft: 4,
-                            marginRight: 16,
-                            fontWeight: 500,
-                          }}
-                        >
-                          Yes
-                        </label>
-                      </div>
-                      <div className='form-check form-check-inline mb-0'>
-                        <input
-                          className='form-check-input'
-                          type='radio'
-                          name='was_will_prepared_by_solicitor'
-                          id='will_prepared_no'
-                          value={false}
-                          checked={!application.was_will_prepared_by_solicitor}
-                          onChange={() => {
-                            setApplication({
-                              ...application,
-                              was_will_prepared_by_solicitor: false,
-                            });
-                            setTriggerChandleChange(!triggerHandleChange);
-                          }}
-                          disabled={
-                            application.approved ||
-                            application.is_rejected ||
-                            !isAdmin
-                          }
-                        />
-                        <label
-                          className='form-check-label'
-                          htmlFor='will_prepared_no'
-                          style={{ marginLeft: 4, fontWeight: 500 }}
-                        >
-                          No
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <hr />
-                <div className='row '>
-                  <div className='col-md-12'>
-                    <label className='form-label col-12'>
-                      Dispute Details:
-                    </label>
-                    <div className='input-group input-group-sm shadow'>
-                      <textarea
-                        type='text'
-                        className={`form-control ${
-                          editMode.dispute_details && ' bg-warning-subtle'
-                        }`}
-                        value={
-                          application.dispute.details === 'No dispute'
-                            ? ''
-                            : application.dispute.details
-                        }
-                        onChange={(e) =>
-                          handleNestedChange(e, 'dispute', 'details')
-                        }
-                        readOnly={!editMode.dispute_details}
-                      />
-                      <button
-                        type='button'
-                        className='btn btn-dark'
-                        onClick={() => {
-                          if (editMode.dispute_details) submitChangesHandler();
-                          toggleEditMode('dispute_details');
-                        }}
-                        disabled={
-                          application.approved ||
-                          application.is_rejected ||
-                          !isAdmin
-                        }
-                      >
-                        {editMode.dispute_details ? (
-                          <FaSave size={20} color='red' />
-                        ) : (
-                          <FaEdit size={20} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div
+      className='bg-white rounded-4 p-4 mb-4'
+      style={{
+        boxShadow:
+          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      }}
+    >
+      {/* Header */}
+      <div
+        className='px-4 py-4 mb-4 rounded-3'
+        style={{
+          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+          color: 'white',
+        }}
+      >
+        <div className='row align-items-center'>
+          <div className='col-lg-8'>
+            <h5 className='mb-0 fw-bold d-flex align-items-center gap-2'>
+              <svg
+                width='20'
+                height='20'
+                fill='currentColor'
+                viewBox='0 0 20 20'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z'
+                  clipRule='evenodd'
+                />
+              </svg>
+              Application Details
+            </h5>
+          </div>
+          <div className='col-lg-4 text-end'>
+            <div
+              className='d-flex align-items-center justify-content-end gap-2'
+              style={{ fontSize: '0.875rem' }}
+            >
+              {isAdmin ? (
+                <>
+                  <svg
+                    width='16'
+                    height='16'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path d='M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z' />
+                  </svg>
+                  Edit Mode Available
+                </>
+              ) : (
+                <>
+                  <svg
+                    width='16'
+                    height='16'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path
+                      fillRule='evenodd'
+                      d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
+                      clipRule='evenodd'
+                    />
+                  </svg>
+                  Read-Only Mode
+                </>
+              )}
             </div>
-
-            <ApplicantsPart
-              addItem={addItem}
-              application={application}
-              handleListChange={handleListChange}
-              editMode={editMode}
-              submitChangesHandler={submitChangesHandler}
-              toggleEditMode={toggleEditMode}
-              removeItem={removeItem}
-              triggerHandleChange={triggerHandleChange}
-              setTriggerChandleChange={setTriggerChandleChange}
-              isAdmin={isAdmin}
-            />
-            <EstatesPart
-              addItem={addItem}
-              application={application}
-              handleListChange={handleListChange}
-              editMode={editMode}
-              submitChangesHandler={submitChangesHandler}
-              toggleEditMode={toggleEditMode}
-              removeItem={removeItem}
-              triggerChandleChange={triggerHandleChange}
-              setTriggerChandleChange={setTriggerChandleChange}
-              isAdmin={isAdmin}
-            />
-          </form>
+          </div>
         </div>
       </div>
-    </>
+
+      {/* Error Messages */}
+      {errorMessage && (
+        <div
+          className={`mb-4 p-4 rounded-3 d-flex align-items-center gap-3`}
+          style={{
+            backgroundColor: isError ? '#fef2f2' : '#f0fdf4',
+            border: `1px solid ${isError ? '#fecaca' : '#bbf7d0'}`,
+          }}
+        >
+          <div
+            className='d-flex align-items-center justify-content-center rounded-2'
+            style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: isError ? '#dc2626' : '#059669',
+              color: 'white',
+            }}
+          >
+            {isError ? (
+              <svg
+                width='20'
+                height='20'
+                fill='currentColor'
+                viewBox='0 0 20 20'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'
+                  clipRule='evenodd'
+                />
+              </svg>
+            ) : (
+              <svg
+                width='20'
+                height='20'
+                fill='currentColor'
+                viewBox='0 0 20 20'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                  clipRule='evenodd'
+                />
+              </svg>
+            )}
+          </div>
+          <div>
+            <h6
+              className='mb-1 fw-bold'
+              style={{ color: isError ? '#dc2626' : '#059669' }}
+            >
+              {isError ? 'Error' : 'Success'}
+            </h6>
+            <div
+              style={{
+                color: isError ? '#dc2626' : '#059669',
+                fontSize: '0.875rem',
+              }}
+            >
+              {renderErrors(errorMessage)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Basic Information Section */}
+      <div className='mb-5'>
+        <h6 className='fw-bold mb-4' style={{ color: '#111827' }}>
+          Basic Information
+        </h6>
+        <div className='row g-4'>
+          {/* Amount Field */}
+          <div className='col-md-6'>
+            <label
+              className='form-label fw-semibold mb-2'
+              style={{ color: '#374151', fontSize: '0.875rem' }}
+            >
+              Amount
+            </label>
+            <div className='position-relative'>
+              <div
+                className='position-absolute start-0 top-50 translate-middle-y ms-3'
+                style={{ color: '#9ca3af', zIndex: 10 }}
+              >
+                {application?.currency_sign || '$'}
+              </div>
+              <input
+                type='text'
+                className='form-control ps-5 py-3 border-0 rounded-3'
+                style={{
+                  backgroundColor: editMode.amount ? '#fef3c7' : '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '0.875rem',
+                  cursor: editMode.amount ? 'text' : 'not-allowed',
+                }}
+                value={
+                  editMode.amount
+                    ? application.amount
+                    : formatCurrency(application.amount)
+                }
+                onChange={(e) => handleChange(e, 'amount')}
+                readOnly={!editMode.amount}
+                onFocus={(e) => {
+                  if (editMode.amount) {
+                    e.target.style.borderColor = '#8b5cf6';
+                    e.target.style.boxShadow =
+                      '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                  }
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              <button
+                type='button'
+                className='position-absolute end-0 top-50 translate-middle-y me-3 btn btn-sm p-1 rounded-2'
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  zIndex: 10,
+                }}
+                onClick={() => {
+                  if (editMode.amount) submitChangesHandler();
+                  toggleEditMode('amount');
+                }}
+                disabled={
+                  application.approved || application.is_rejected || !isAdmin
+                }
+              >
+                {getEditIcon('amount')}
+              </button>
+            </div>
+          </div>
+
+          {/* Term Field */}
+          <div className='col-md-6'>
+            <label
+              className='form-label fw-semibold mb-2'
+              style={{ color: '#374151', fontSize: '0.875rem' }}
+            >
+              Term
+            </label>
+            <div className='position-relative'>
+              <div
+                className='position-absolute start-0 top-50 translate-middle-y ms-3'
+                style={{ color: '#9ca3af', zIndex: 10 }}
+              >
+                <svg
+                  width='16'
+                  height='16'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <input
+                type='text'
+                className='form-control ps-5 py-3 border-0 rounded-3'
+                style={{
+                  backgroundColor: editMode.term ? '#fef3c7' : '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '0.875rem',
+                  cursor: editMode.term ? 'text' : 'not-allowed',
+                }}
+                value={
+                  editMode.term
+                    ? application.term
+                    : `${application.term} months`
+                }
+                onChange={(e) => handleChange(e, 'term')}
+                readOnly={!editMode.term}
+                onFocus={(e) => {
+                  if (editMode.term) {
+                    e.target.style.borderColor = '#8b5cf6';
+                    e.target.style.boxShadow =
+                      '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                  }
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              <button
+                type='button'
+                className='position-absolute end-0 top-50 translate-middle-y me-3 btn btn-sm p-1 rounded-2'
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  zIndex: 10,
+                }}
+                onClick={() => {
+                  if (editMode.term) submitChangesHandler();
+                  toggleEditMode('term');
+                }}
+                disabled={
+                  application.approved || application.is_rejected || !isAdmin
+                }
+              >
+                {getEditIcon('term')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Deceased Information Section */}
+      <div className='mb-5'>
+        <h6 className='fw-bold mb-4' style={{ color: '#111827' }}>
+          Deceased Information
+        </h6>
+        <div className='row g-4'>
+          {/* Deceased First Name */}
+          <div className='col-md-6'>
+            <label
+              className='form-label fw-semibold mb-2'
+              style={{ color: '#374151', fontSize: '0.875rem' }}
+            >
+              First Name
+            </label>
+            <div className='position-relative'>
+              <div
+                className='position-absolute start-0 top-50 translate-middle-y ms-3'
+                style={{ color: '#9ca3af', zIndex: 10 }}
+              >
+                <svg
+                  width='16'
+                  height='16'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <input
+                type='text'
+                className='form-control ps-5 py-3 border-0 rounded-3'
+                style={{
+                  backgroundColor: editMode.deceased_first_name
+                    ? '#fef3c7'
+                    : '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '0.875rem',
+                  cursor: editMode.deceased_first_name ? 'text' : 'not-allowed',
+                }}
+                value={application.deceased.first_name}
+                onChange={(e) =>
+                  handleNestedChange(e, 'deceased', 'first_name')
+                }
+                readOnly={!editMode.deceased_first_name}
+                onFocus={(e) => {
+                  if (editMode.deceased_first_name) {
+                    e.target.style.borderColor = '#8b5cf6';
+                    e.target.style.boxShadow =
+                      '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                  }
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              <button
+                type='button'
+                className='position-absolute end-0 top-50 translate-middle-y me-3 btn btn-sm p-1 rounded-2'
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  zIndex: 10,
+                }}
+                onClick={() => {
+                  if (editMode.deceased_first_name) submitChangesHandler();
+                  toggleEditMode('deceased_first_name');
+                }}
+                disabled={
+                  application.approved || application.is_rejected || !isAdmin
+                }
+              >
+                {getEditIcon('deceased_first_name')}
+              </button>
+            </div>
+          </div>
+
+          {/* Deceased Last Name */}
+          <div className='col-md-6'>
+            <label
+              className='form-label fw-semibold mb-2'
+              style={{ color: '#374151', fontSize: '0.875rem' }}
+            >
+              Last Name
+            </label>
+            <div className='position-relative'>
+              <div
+                className='position-absolute start-0 top-50 translate-middle-y ms-3'
+                style={{ color: '#9ca3af', zIndex: 10 }}
+              >
+                <svg
+                  width='16'
+                  height='16'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <input
+                type='text'
+                className='form-control ps-5 py-3 border-0 rounded-3'
+                style={{
+                  backgroundColor: editMode.deceased_last_name
+                    ? '#fef3c7'
+                    : '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '0.875rem',
+                  cursor: editMode.deceased_last_name ? 'text' : 'not-allowed',
+                }}
+                value={application.deceased.last_name}
+                onChange={(e) => handleNestedChange(e, 'deceased', 'last_name')}
+                readOnly={!editMode.deceased_last_name}
+                onFocus={(e) => {
+                  if (editMode.deceased_last_name) {
+                    e.target.style.borderColor = '#8b5cf6';
+                    e.target.style.boxShadow =
+                      '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                  }
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              <button
+                type='button'
+                className='position-absolute end-0 top-50 translate-middle-y me-3 btn btn-sm p-1 rounded-2'
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  zIndex: 10,
+                }}
+                onClick={() => {
+                  if (editMode.deceased_last_name) submitChangesHandler();
+                  toggleEditMode('deceased_last_name');
+                }}
+                disabled={
+                  application.approved || application.is_rejected || !isAdmin
+                }
+              >
+                {getEditIcon('deceased_last_name')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Will Preparation Section */}
+      <div className='mb-5'>
+        <h6 className='fw-bold mb-4' style={{ color: '#111827' }}>
+          Will Preparation
+        </h6>
+        <div
+          className='p-4 rounded-3'
+          style={{
+            backgroundColor: application.was_will_prepared_by_solicitor
+              ? '#f0fdf4'
+              : '#fef2f2',
+            border: `1px solid ${
+              application.was_will_prepared_by_solicitor ? '#bbf7d0' : '#fecaca'
+            }`,
+          }}
+        >
+          <div className='d-flex align-items-center gap-4'>
+            <div className='d-flex align-items-center gap-2'>
+              <svg
+                width='20'
+                height='20'
+                fill={
+                  application.was_will_prepared_by_solicitor
+                    ? '#059669'
+                    : '#dc2626'
+                }
+                viewBox='0 0 20 20'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z'
+                  clipRule='evenodd'
+                />
+              </svg>
+              <span className='fw-semibold' style={{ color: '#374151' }}>
+                Was this will professionally prepared by a solicitor?
+              </span>
+            </div>
+            <div className='d-flex align-items-center gap-4'>
+              <div className='form-check d-flex align-items-center gap-2'>
+                <input
+                  className='form-check-input'
+                  type='radio'
+                  name='was_will_prepared_by_solicitor'
+                  id='will_prepared_yes'
+                  value={true}
+                  checked={!!application.was_will_prepared_by_solicitor}
+                  onChange={() => {
+                    setApplication({
+                      ...application,
+                      was_will_prepared_by_solicitor: true,
+                    });
+                    setTriggerChandleChange(!triggerHandleChange);
+                  }}
+                  disabled={
+                    application.approved || application.is_rejected || !isAdmin
+                  }
+                  style={{ marginTop: 0 }}
+                />
+                <label
+                  className='form-check-label fw-semibold'
+                  htmlFor='will_prepared_yes'
+                  style={{ color: '#059669' }}
+                >
+                  Yes
+                </label>
+              </div>
+              <div className='form-check d-flex align-items-center gap-2'>
+                <input
+                  className='form-check-input'
+                  type='radio'
+                  name='was_will_prepared_by_solicitor'
+                  id='will_prepared_no'
+                  value={false}
+                  checked={!application.was_will_prepared_by_solicitor}
+                  onChange={() => {
+                    setApplication({
+                      ...application,
+                      was_will_prepared_by_solicitor: false,
+                    });
+                    setTriggerChandleChange(!triggerHandleChange);
+                  }}
+                  disabled={
+                    application.approved || application.is_rejected || !isAdmin
+                  }
+                  style={{ marginTop: 0 }}
+                />
+                <label
+                  className='form-check-label fw-semibold'
+                  htmlFor='will_prepared_no'
+                  style={{ color: '#dc2626' }}
+                >
+                  No
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dispute Details Section */}
+      <div className='mb-5'>
+        <h6 className='fw-bold mb-4' style={{ color: '#111827' }}>
+          Dispute Details
+        </h6>
+        <div className='position-relative'>
+          <textarea
+            className='form-control border-0 rounded-3'
+            style={{
+              backgroundColor: editMode.dispute_details ? '#fef3c7' : '#f9fafb',
+              border: '1px solid #e5e7eb',
+              fontSize: '0.875rem',
+              minHeight: '120px',
+              paddingRight: '50px',
+              cursor: editMode.dispute_details ? 'text' : 'not-allowed',
+            }}
+            value={
+              application.dispute.details === 'No dispute'
+                ? ''
+                : application.dispute.details
+            }
+            onChange={(e) => handleNestedChange(e, 'dispute', 'details')}
+            readOnly={!editMode.dispute_details}
+            placeholder={
+              editMode.dispute_details
+                ? 'Enter dispute details...'
+                : 'No dispute details provided'
+            }
+            onFocus={(e) => {
+              if (editMode.dispute_details) {
+                e.target.style.borderColor = '#8b5cf6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+              }
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e5e7eb';
+              e.target.style.boxShadow = 'none';
+            }}
+          />
+          <button
+            type='button'
+            className='position-absolute top-0 end-0 mt-3 me-3 btn btn-sm p-1 rounded-2'
+            style={{
+              background: 'transparent',
+              border: 'none',
+              zIndex: 10,
+            }}
+            onClick={() => {
+              if (editMode.dispute_details) submitChangesHandler();
+              toggleEditMode('dispute_details');
+            }}
+            disabled={
+              application.approved || application.is_rejected || !isAdmin
+            }
+          >
+            {getEditIcon('dispute_details')}
+          </button>
+        </div>
+      </div>
+
+      {/* Child Components */}
+      <ApplicantsPart
+        addItem={addItem}
+        application={application}
+        handleListChange={handleListChange}
+        editMode={editMode}
+        submitChangesHandler={submitChangesHandler}
+        toggleEditMode={toggleEditMode}
+        removeItem={removeItem}
+        triggerHandleChange={triggerHandleChange}
+        setTriggerChandleChange={setTriggerChandleChange}
+        isAdmin={isAdmin}
+      />
+      <EstatesPart
+        application={application}
+        isAdmin={isAdmin}
+        refresh={refresh}
+        setRefresh={setRefresh}
+      />
+    </div>
   );
 };
 

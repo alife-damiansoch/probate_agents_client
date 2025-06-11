@@ -1,8 +1,27 @@
-import React from 'react';
-import { formatDate } from '../../../GenericFunctions/HelperGenericFunctions';
+import React, { useEffect, useState } from 'react';
 import LoadingComponent from '../../../GenericComponents/LoadingComponent';
+import {
+  formatCategoryName,
+  formatDate,
+  getEstates,
+} from '../../../GenericFunctions/HelperGenericFunctions';
 
 const ApplicationDerailsReadOnlyPart = ({ application, assignedSolicitor }) => {
+  const [estates, setEstates] = useState([]);
+
+  useEffect(() => {
+    const fetchEstates = async () => {
+      try {
+        const estatesData = await getEstates(application);
+        setEstates(estatesData);
+      } catch (error) {
+        console.error('Error fetching estates:', error);
+        setEstates([]);
+      }
+    };
+
+    fetchEstates();
+  }, [application.estate_summary]);
   return (
     <>
       {application && assignedSolicitor ? (
@@ -182,22 +201,20 @@ const ApplicationDerailsReadOnlyPart = ({ application, assignedSolicitor }) => {
             <div className='mt-4'>
               <h5>Estates:</h5>
               <div className='row'>
-                {application.estates.map((estate, index) => (
-                  <React.Fragment key={index}>
-                    <div className='col-md-3'>
-                      <strong>Estate:</strong>
-                    </div>
-                    <div className='col-md-9'>
-                      {estate.description} - Value: {application.currency_sign}{' '}
-                      {estate.value}
-                    </div>
-                  </React.Fragment>
-                ))}
+                {estates &&
+                  estates.map((estate, index) => (
+                    <React.Fragment key={index}>
+                      <div>
+                        {formatCategoryName(estate.category)} - Value:{' '}
+                        {application.currency_sign} {estate.value}
+                      </div>
+                    </React.Fragment>
+                  ))}
               </div>
             </div>
 
             {/* Expenses */}
-            <div className='mt-4'>
+            {/* <div className='mt-4'>
               <h5>Expenses:</h5>
               <div className='row'>
                 {application.expenses.map((expense, index) => (
@@ -212,7 +229,7 @@ const ApplicationDerailsReadOnlyPart = ({ application, assignedSolicitor }) => {
                   </React.Fragment>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       ) : (

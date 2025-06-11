@@ -1,4 +1,3 @@
-
 import CommentsComponent from '../SolicitorComponents/Applications/Comments/CommentsComponent';
 
 const OffcanvasComponent = ({ applicationId, comments, setComments }) => {
@@ -15,7 +14,7 @@ const OffcanvasComponent = ({ applicationId, comments, setComments }) => {
       </button>
 
       <div
-        className='offcanvas offcanvas-bottom custom-offcanvas'
+        className='offcanvas offcanvas-bottom custom-offcanvas pb-5 mb-3'
         data-bs-scroll='true'
         tabIndex='-1'
         id='offcanvasBottom'
