@@ -3,7 +3,7 @@ const toNumber = (val) => (isNaN(parseFloat(val)) ? 0 : parseFloat(val));
 export function EstateSummaryForApp({
   estates = [],
   requestedAmount,
-  currency_sign,
+  currency_sign="",
 }) {
   const assets = estates.filter((e) => e.lendable !== null);
   const deductions = estates.filter((e) => e.lendable === null);
@@ -24,6 +24,8 @@ export function EstateSummaryForApp({
   const requested = toNumber(requestedAmount);
 
   return (
+      <>
+        {}
     <div
       className={`mt-4 p-3 bg-light rounded border ${
         requested > maxAdvance ? 'border-danger' : 'border-success'
@@ -108,5 +110,6 @@ export function EstateSummaryForApp({
         </small>
       </div>
     </div>
+        </>
   );
 }
