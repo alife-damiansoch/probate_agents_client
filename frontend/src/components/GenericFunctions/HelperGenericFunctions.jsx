@@ -1,4 +1,4 @@
-
+import { fetchData } from './AxiosGenericFunctions';
 
 const renderErrors = (errors) => {
   const errorElements = [];
@@ -58,4 +58,77 @@ export const displayUserTeams = (user) => {
     .join(', ');
 
   return teamsDisplay ? ` (${teamsDisplay})` : ''; // Add parentheses only if there are teams
+};
+
+/**
+ * Helper function to format category names for display
+ * @param {string} category - The category name to format
+ * @returns {string} - Formatted category name
+ */
+export const formatCategoryName = (category) => {
+  return category
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+/**
+ * Helper function to format field names for display
+ * @param {string} fieldName - The field name to format
+ * @returns {string} - Formatted field name
+ */
+export const formatFieldName = (fieldName) => {
+  return fieldName
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+/**
+ * Fetches and processes estates data for an application
+ * @param {Object} application - The application object containing estate_summary URL
+ * @returns {Promise<Array>} - Promise that resolves to an array of flattened estates
+ */
+export const getEstates = async (application) => {
+  if (!application.estate_summary) {
+    console.log('No estate_summary URL provided');
+    return [];
+  }
+
+  console.log(
+    `Fetching estates for application ${application.id} from ${application.estate_summary}`
+  );
+
+  try {
+    // Use fetchData helper (adjust if yours expects full auth object)
+    const response = await fetchData('token', application.estate_summary, true); // true = absolute url
+
+    console.log('Estates response:', response);
+
+    // Flatten all estate categories into a single array
+    const estatesData = response.data;
+    const allEstates = [];
+
+    // Extract estates from all categories and add category labels
+    Object.entries(estatesData).forEach(([category, categoryEstates]) => {
+      if (Array.isArray(categoryEstates) && categoryEstates.length > 0) {
+        categoryEstates.forEach((estate) => {
+          // Add category information to each estate
+          const isLiability = category === 'irish_debt';
+          allEstates.push({
+            ...estate,
+            category: category,
+            group_label: formatCategoryName(category),
+            is_asset: isLiability ? false : estate.is_asset, // Mark irish_debt as liability
+          });
+        });
+      }
+    });
+
+    console.log('Flattened estates:', allEstates);
+    return allEstates;
+  } catch (error) {
+    console.error('Error fetching estates:', error);
+    throw error; // Re-throw to let the calling component handle the error
+  }
 };

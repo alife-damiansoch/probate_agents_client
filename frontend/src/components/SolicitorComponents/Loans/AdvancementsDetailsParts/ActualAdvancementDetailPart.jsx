@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import LoadingComponent from '../../../GenericComponents/LoadingComponent';
 import { formatDate } from '../../../GenericFunctions/HelperGenericFunctions';
@@ -11,134 +10,551 @@ const ActualAdvancementDetailPart = ({
   return (
     <>
       {advancement ? (
-        <div className='row'>
+        <div className='row g-4'>
+          {/* Financial Information */}
           <div className='col-md-6'>
-            <ul className='list-group shadow'>
-              <li className='list-group-item bg-info-subtle'>
-                <strong>Current Balance:</strong> {advancement.currency_sign}{' '}
-                {advancement.current_balance}
-              </li>
+            <div
+              className='p-4 rounded-3'
+              style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: '2px solid #3b82f6',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <h6
+                className='fw-bold mb-3 pb-2 d-flex align-items-center gap-2'
+                style={{
+                  color: '#1e40af',
+                  borderBottom: '2px solid #3b82f6',
+                  fontSize: '1rem',
+                }}
+              >
+                <svg
+                  width='20'
+                  height='20'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
+                >
+                  <path d='M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z' />
+                  <path
+                    fillRule='evenodd'
+                    d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.51-1.31c-.562-.649-1.413-1.076-2.353-1.253V5z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+                Financial Details
+              </h6>
 
-              <li
-                className={`list-group-item ${
-                  advancement.amount_paid > 0 ? 'text-success' : ''
-                }`}
-              >
-                <strong>Amount Paid:</strong> {advancement.currency_sign}{' '}
-                {advancement.amount_paid}
-              </li>
-              <li
-                className={`list-group-item ${
-                  advancement.fee_agreed > 0 ? 'text-warning' : ''
-                }`}
-              >
-                <strong>Fee Agreed: </strong>
-                {isEditing ? (
-                  <input
-                    type='text'
-                    className='form-control bg-danger-subtle'
-                    name='fee_agreed'
-                    value={advancement.fee_agreed}
-                    onChange={handleInputChange}
-                  />
-                ) : (
-                  <span>
-                    {advancement.currency_sign} {advancement.fee_agreed}
-                  </span>
-                )}
-              </li>
-              <li
-                className={`list-group-item ${
-                  advancement.extension_fees_total > 0 ? 'text-warning' : ''
-                }`}
-              >
-                <strong>Extension Fees Total:</strong>{' '}
-                {advancement.currency_sign} {advancement.extension_fees_total}
-              </li>
+              <div className='d-flex flex-column gap-3'>
+                {/* Current Balance - Highlighted */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background:
+                      'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                    border: '1px solid #93c5fd',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-bold'
+                      style={{ color: '#1e40af', fontSize: '0.9rem' }}
+                    >
+                      Current Balance:
+                    </span>
+                    <span
+                      className='fw-bold'
+                      style={{ color: '#1e40af', fontSize: '1.1rem' }}
+                    >
+                      {advancement.currency_sign} {advancement.current_balance}
+                    </span>
+                  </div>
+                </div>
 
-              <li className='list-group-item'>
-                <strong>Term Agreed: </strong>
-                {isEditing ? (
-                  <input
-                    type='text'
-                    className='form-control bg-danger-subtle'
-                    name='term_agreed'
-                    value={advancement.term_agreed}
-                    onChange={handleInputChange}
-                  />
-                ) : (
-                  <span>{advancement.term_agreed} months</span>
-                )}
-              </li>
-              <li className='list-group-item'>
-                <strong>Amount Agreed: </strong>
-                {isEditing ? (
-                  <input
-                    type='text'
-                    className='form-control bg-danger-subtle'
-                    name='amount_agreed'
-                    value={advancement.amount_agreed}
-                    onChange={handleInputChange}
-                  />
-                ) : (
-                  <span>
-                    {advancement.currency_sign} {advancement.amount_agreed}
-                  </span>
-                )}
-              </li>
-            </ul>
+                {/* Amount Paid */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background:
+                      advancement.amount_paid > 0
+                        ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
+                        : 'rgba(248, 250, 252, 0.8)',
+                    border:
+                      advancement.amount_paid > 0
+                        ? '1px solid #86efac'
+                        : '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Amount Paid:
+                    </span>
+                    <span
+                      className='fw-semibold'
+                      style={{
+                        color:
+                          advancement.amount_paid > 0 ? '#16a34a' : '#6b7280',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      {advancement.currency_sign} {advancement.amount_paid}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Fee Agreed - Editable */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background:
+                      advancement.fee_agreed > 0
+                        ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)'
+                        : 'rgba(248, 250, 252, 0.8)',
+                    border:
+                      advancement.fee_agreed > 0
+                        ? '1px solid #fbbf24'
+                        : '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Fee Agreed:
+                    </span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        className='form-control'
+                        name='fee_agreed'
+                        value={advancement.fee_agreed}
+                        onChange={handleInputChange}
+                        style={{
+                          maxWidth: '120px',
+                          background: 'rgba(254, 242, 242, 0.8)',
+                          border: '2px solid #fca5a5',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                        }}
+                      />
+                    ) : (
+                      <span
+                        className='fw-semibold'
+                        style={{
+                          color:
+                            advancement.fee_agreed > 0 ? '#d97706' : '#6b7280',
+                          fontSize: '1rem',
+                        }}
+                      >
+                        {advancement.currency_sign} {advancement.fee_agreed}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Extension Fees */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background:
+                      advancement.extension_fees_total > 0
+                        ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)'
+                        : 'rgba(248, 250, 252, 0.8)',
+                    border:
+                      advancement.extension_fees_total > 0
+                        ? '1px solid #fbbf24'
+                        : '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Extension Fees:
+                    </span>
+                    <span
+                      className='fw-semibold'
+                      style={{
+                        color:
+                          advancement.extension_fees_total > 0
+                            ? '#d97706'
+                            : '#6b7280',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      {advancement.currency_sign}{' '}
+                      {advancement.extension_fees_total}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Term Agreed - Editable */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background: 'rgba(248, 250, 252, 0.8)',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Term Agreed:
+                    </span>
+                    {isEditing ? (
+                      <div className='d-flex align-items-center gap-2'>
+                        <input
+                          type='text'
+                          className='form-control'
+                          name='term_agreed'
+                          value={advancement.term_agreed}
+                          onChange={handleInputChange}
+                          style={{
+                            maxWidth: '80px',
+                            background: 'rgba(254, 242, 242, 0.8)',
+                            border: '2px solid #fca5a5',
+                            borderRadius: '8px',
+                            fontSize: '0.9rem',
+                            fontWeight: '600',
+                          }}
+                        />
+                        <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                          months
+                        </span>
+                      </div>
+                    ) : (
+                      <span
+                        className='fw-semibold'
+                        style={{ color: '#374151', fontSize: '1rem' }}
+                      >
+                        {advancement.term_agreed} months
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Amount Agreed - Editable */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background: 'rgba(248, 250, 252, 0.8)',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Amount Agreed:
+                    </span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        className='form-control'
+                        name='amount_agreed'
+                        value={advancement.amount_agreed}
+                        onChange={handleInputChange}
+                        style={{
+                          maxWidth: '120px',
+                          background: 'rgba(254, 242, 242, 0.8)',
+                          border: '2px solid #fca5a5',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                        }}
+                      />
+                    ) : (
+                      <span
+                        className='fw-semibold'
+                        style={{ color: '#374151', fontSize: '1rem' }}
+                      >
+                        {advancement.currency_sign} {advancement.amount_agreed}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* Status & Administrative Information */}
           <div className='col-md-6'>
-            <ul className='list-group shadow'>
-              <li className='list-group-item'>
-                <strong>Approved Date:</strong>{' '}
-                {formatDate(advancement.approved_date)}
-              </li>
-              <li className='list-group-item'>
-                <strong>Maturity Date:</strong>{' '}
-                {advancement.maturity_date !== null ? (
-                  formatDate(advancement.maturity_date)
-                ) : (
-                  <span className=' text-danger text-uppercase'>
-                    Not paid out
-                  </span>
-                )}
-              </li>
-              <li
-                className={`list-group-item ${
-                  !advancement.is_settled ? 'text-warning' : 'text-success'
-                }`}
+            <div
+              className='p-4 rounded-3'
+              style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: '2px solid #16a34a',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <h6
+                className='fw-bold mb-3 pb-2 d-flex align-items-center gap-2'
+                style={{
+                  color: '#15803d',
+                  borderBottom: '2px solid #16a34a',
+                  fontSize: '1rem',
+                }}
               >
-                <strong>Is Settled:</strong>{' '}
-                {advancement.is_settled ? 'Yes' : 'No'}
-              </li>
-              {advancement.is_settled && (
-                <li className='list-group-item'>
-                  <strong>Settled Date:</strong>{' '}
-                  {formatDate(advancement.settled_date)}
-                </li>
-              )}
-              <li className='list-group-item'>
-                <strong>Approved By:</strong> {advancement.approved_by_email}
-              </li>
-              <li className='list-group-item'>
-                <strong>Last Updated By:</strong>{' '}
-                {advancement.last_updated_by_email}
-              </li>
-              <li className='list-group-item'>
-                <Link
-                  className=' link-underline-info'
-                  to={`/applications/${advancement.application}`}
+                <svg
+                  width='20'
+                  height='20'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
                 >
-                  <strong>Application ID:</strong> {advancement.application}
-                </Link>
-              </li>
-            </ul>
+                  <path
+                    fillRule='evenodd'
+                    d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+                Status & Information
+              </h6>
+
+              <div className='d-flex flex-column gap-3'>
+                {/* Approved Date */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background: 'rgba(248, 250, 252, 0.8)',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Approved Date:
+                    </span>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '1rem' }}
+                    >
+                      {formatDate(advancement.approved_date)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Maturity Date */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background: advancement.maturity_date
+                      ? 'rgba(248, 250, 252, 0.8)'
+                      : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                    border: advancement.maturity_date
+                      ? '1px solid #e2e8f0'
+                      : '1px solid #fca5a5',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Maturity Date:
+                    </span>
+                    {advancement.maturity_date !== null ? (
+                      <span
+                        className='fw-semibold'
+                        style={{ color: '#374151', fontSize: '1rem' }}
+                      >
+                        {formatDate(advancement.maturity_date)}
+                      </span>
+                    ) : (
+                      <span
+                        className='px-2 py-1 rounded-2 fw-bold text-uppercase'
+                        style={{
+                          background: '#dc2626',
+                          color: '#ffffff',
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        Not Paid Out
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Settlement Status */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background: advancement.is_settled
+                      ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
+                      : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                    border: advancement.is_settled
+                      ? '1px solid #86efac'
+                      : '1px solid #fbbf24',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Settlement Status:
+                    </span>
+                    <span
+                      className='fw-bold'
+                      style={{
+                        color: advancement.is_settled ? '#16a34a' : '#d97706',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      {advancement.is_settled ? 'Settled' : 'Unsettled'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Settled Date - Only show if settled */}
+                {advancement.is_settled && (
+                  <div
+                    className='p-3 rounded-3'
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
+                      border: '1px solid #86efac',
+                    }}
+                  >
+                    <div className='d-flex align-items-center justify-content-between'>
+                      <span
+                        className='fw-semibold'
+                        style={{ color: '#374151', fontSize: '0.9rem' }}
+                      >
+                        Settled Date:
+                      </span>
+                      <span
+                        className='fw-semibold'
+                        style={{ color: '#16a34a', fontSize: '1rem' }}
+                      >
+                        {formatDate(advancement.settled_date)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Approved By */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background: 'rgba(248, 250, 252, 0.8)',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Approved By:
+                    </span>
+                    <span
+                      className='fw-medium'
+                      style={{
+                        color: '#1e40af',
+                        fontSize: '0.9rem',
+                        maxWidth: '200px',
+                        textAlign: 'right',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {advancement.approved_by_email}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Last Updated By */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background: 'rgba(248, 250, 252, 0.8)',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Last Updated By:
+                    </span>
+                    <span
+                      className='fw-medium'
+                      style={{
+                        color: '#6b7280',
+                        fontSize: '0.9rem',
+                        maxWidth: '200px',
+                        textAlign: 'right',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {advancement.last_updated_by_email || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Application Link */}
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    background:
+                      'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                    border: '1px solid #93c5fd',
+                  }}
+                >
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '0.9rem' }}
+                    >
+                      Related Application:
+                    </span>
+                    <Link
+                      to={`/applications/${advancement.application}`}
+                      className='fw-bold d-flex align-items-center gap-1'
+                      style={{
+                        color: '#1e40af',
+                        textDecoration: 'underline',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      #{advancement.application}
+                      <svg
+                        width='14'
+                        height='14'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
-        <LoadingComponent />
+        <div
+          className='d-flex align-items-center justify-content-center'
+          style={{ minHeight: '200px' }}
+        >
+          <LoadingComponent />
+        </div>
       )}
     </>
   );

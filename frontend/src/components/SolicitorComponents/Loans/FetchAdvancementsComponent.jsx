@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import { fetchData } from '../../GenericFunctions/AxiosGenericFunctions';
-import LoadingComponent from '../../GenericComponents/LoadingComponent';
-import Loans from './Loans';
-import PaginationComponent from '../../GenericComponents/PaginationComponent';
-import BootstrapSwitch from '../../GenericComponents/BootstrapSwitch';
+import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import IdAndApplicantsFilter from '../Applications/FilterringApplication/IdAndApplicantsFilter';
+import BootstrapSwitch from '../../GenericComponents/BootstrapSwitch';
+import LoadingComponent from '../../GenericComponents/LoadingComponent';
+import PaginationComponent from '../../GenericComponents/PaginationComponent';
+import { fetchData } from '../../GenericFunctions/AxiosGenericFunctions';
 import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
+import IdAndApplicantsFilter from '../Applications/FilterringApplication/IdAndApplicantsFilter';
+import Loans from './Loans';
 
 const FetchAdvancementsComponent = () => {
   const token = Cookies.get('auth_token_agents');
@@ -143,7 +143,7 @@ const FetchAdvancementsComponent = () => {
       {allLoans ? (
         <>
           <div className='row my-5 '>
-            <div className=' col-auto bg-info-subtle rounded-pill p-3 mx-auto'>
+            <div className=' col-auto  p-3 mx-auto'>
               <BootstrapSwitch
                 isChecked={showAssignedAdvancementsOnly}
                 setIsChecked={setShowAssingedAdvancementsOnly}
@@ -154,7 +154,7 @@ const FetchAdvancementsComponent = () => {
               />
             </div>
             {lastPartOfUrl !== 'advancements_paid_out' && (
-              <div className=' col-auto bg-info-subtle rounded-pill p-3 mx-auto'>
+              <div className=' col-auto  p-3 mx-auto'>
                 <BootstrapSwitch
                   isChecked={orderNewToOld}
                   setIsChecked={setOrderNewToOld}
