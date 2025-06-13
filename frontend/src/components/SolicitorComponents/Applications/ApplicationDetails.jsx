@@ -13,12 +13,11 @@ import {
   fetchData,
   patchData,
 } from '../../GenericFunctions/AxiosGenericFunctions';
-import renderErrors, {
-  formatDate,
-} from '../../GenericFunctions/HelperGenericFunctions';
+import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
 import RejectionForm from '../ApplicationDetailsParts/RejectionForm';
 import RequiredDetailsPart from '../ApplicationDetailsParts/RequiredDetailsPart';
 import SolicitorPart from '../ApplicationDetailsParts/SolicitorPart';
+import ApplicationDetailStages from './ApplicationDetailStages';
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -84,90 +83,6 @@ const ApplicationDetails = () => {
     if (application.is_rejected) return 'danger';
     if (application.approved) return 'success';
     return 'warning';
-  };
-
-  const getStatusIcon = (condition, isRejected = false) => {
-    if (isRejected && condition) {
-      return (
-        <svg width='20' height='20' fill='#dc2626' viewBox='0 0 20 20'>
-          <path
-            fillRule='evenodd'
-            d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
-            clipRule='evenodd'
-          />
-        </svg>
-      );
-    }
-    if (condition) {
-      return (
-        <svg width='20' height='20' fill='#059669' viewBox='0 0 20 20'>
-          <path
-            fillRule='evenodd'
-            d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-            clipRule='evenodd'
-          />
-        </svg>
-      );
-    }
-    return (
-      <svg width='20' height='20' fill='#d97706' viewBox='0 0 20 20'>
-        <path
-          fillRule='evenodd'
-          d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z'
-          clipRule='evenodd'
-        />
-      </svg>
-    );
-  };
-
-  const renderStatusCard = (label, value, condition, isRejected = false) => {
-    const bgColor =
-      isRejected && condition ? '#fef2f2' : condition ? '#f0fdf4' : '#fefbf3';
-
-    const borderColor =
-      isRejected && condition ? '#fecaca' : condition ? '#bbf7d0' : '#fed7aa';
-
-    return (
-      <div className='col-lg-3 col-md-4 col-sm-6 mb-3'>
-        <div
-          className='p-3 rounded-3 border h-100'
-          style={{
-            background: bgColor,
-            border: `1px solid ${borderColor}`,
-            minHeight: '100px',
-          }}
-        >
-          <div className='d-flex align-items-center justify-content-between mb-2'>
-            <span
-              className='fw-semibold'
-              style={{
-                fontSize: '0.8rem',
-                color: '#374151',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {label}
-            </span>
-            {getStatusIcon(condition, isRejected)}
-          </div>
-          <div
-            className='fw-bold'
-            style={{
-              fontSize: '0.95rem',
-              color:
-                isRejected && condition
-                  ? '#dc2626'
-                  : condition
-                  ? '#059669'
-                  : '#d97706',
-            }}
-          >
-            {value}
-          </div>
-        </div>
-      </div>
-    );
   };
 
   const handleApprove = () => {
@@ -386,6 +301,13 @@ const ApplicationDetails = () => {
           )}
         </div>
 
+        {/* Status Overview */}
+        <ApplicationDetailStages
+          application={application}
+          refresh={refresh}
+          setRefresh={setRefresh}
+        />
+
         {/* Action Cards */}
         <div className='row g-4 mb-4'>
           <div className='col-lg-12'>
@@ -518,110 +440,6 @@ const ApplicationDetails = () => {
             />
           </div>
         )}
-
-        {/* Status Overview */}
-        <div
-          className='bg-white rounded-4 p-4 mb-4'
-          style={{
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          }}
-        >
-          <h5 className='mb-4 fw-bold' style={{ color: '#111827' }}>
-            Application Status
-          </h5>
-          <div className='row'>
-            {renderStatusCard(
-              'Date Submitted',
-              formatDate(application.date_submitted),
-              true
-            )}
-            {renderStatusCard(
-              'Adv Agreement Ready',
-              application.loan_agreement_ready ? 'Yes' : 'No',
-              application.loan_agreement_ready
-            )}
-            {renderStatusCard(
-              'Documents Uploaded',
-              application.documents.length > 0 ||
-                application.signed_documents.length > 0
-                ? 'Yes'
-                : 'No',
-              application.documents.length > 0 ||
-                application.signed_documents.length > 0
-            )}
-            {renderStatusCard(
-              'Undertaking Ready',
-              application.undertaking_ready ? 'Yes' : 'No',
-              application.undertaking_ready
-            )}
-
-            {/* Approved states */}
-            {application.approved &&
-              application.loan &&
-              application.loan.needs_committee_approval === false &&
-              renderStatusCard('Approved', 'Yes', application.approved)}
-
-            {application.approved &&
-              application.loan &&
-              application.loan.needs_committee_approval === true &&
-              application.loan.is_committee_approved === true &&
-              renderStatusCard(
-                'Approved',
-                'Approved by committee',
-                application.approved
-              )}
-
-            {/* Rejected states */}
-            {application.is_rejected &&
-              renderStatusCard(
-                'Rejected',
-                'Yes',
-                application.is_rejected,
-                true
-              )}
-
-            {application.approved &&
-              application.loan &&
-              application.loan.needs_committee_approval === true &&
-              application.loan.is_committee_approved === false &&
-              renderStatusCard('Rejected', 'Rejected by committee', true, true)}
-
-            {/* Awaiting decision states */}
-            {application.is_rejected === false &&
-              application.approved === false &&
-              renderStatusCard('Status', 'Awaiting decision...', false)}
-
-            {application.is_rejected === false &&
-              application.approved === true &&
-              application.loan &&
-              application.loan.needs_committee_approval === true &&
-              application.loan.is_committee_approved === null &&
-              renderStatusCard(
-                'Status',
-                'Awaiting committee decision...',
-                false
-              )}
-          </div>
-
-          {/* Rejection Reason */}
-          {application.is_rejected && (
-            <div
-              className='mt-4 p-4 rounded-3'
-              style={{
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-              }}
-            >
-              <h6 className='fw-bold mb-2' style={{ color: '#dc2626' }}>
-                Reason for Rejection
-              </h6>
-              <p className='mb-0' style={{ color: '#7f1d1d' }}>
-                {application.rejected_reason}
-              </p>
-            </div>
-          )}
-        </div>
 
         {/* Component Sections */}
         <SolicitorPart

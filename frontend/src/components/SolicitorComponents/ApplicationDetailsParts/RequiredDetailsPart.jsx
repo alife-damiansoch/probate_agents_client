@@ -43,7 +43,6 @@ const RequiredDetailsPart = ({
       deceased,
       dispute,
       applicants,
-      estates,
       was_will_prepared_by_solicitor,
     } = application;
 
