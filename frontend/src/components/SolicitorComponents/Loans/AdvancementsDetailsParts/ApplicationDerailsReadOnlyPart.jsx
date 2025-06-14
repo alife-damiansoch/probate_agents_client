@@ -3,6 +3,7 @@ import LoadingComponent from '../../../GenericComponents/LoadingComponent';
 import {
   formatCategoryName,
   formatDate,
+  formatMoney,
   getEstates,
 } from '../../../GenericFunctions/HelperGenericFunctions';
 
@@ -157,7 +158,10 @@ const ApplicationDetailsReadOnlyPart = ({ application, assignedSolicitor }) => {
                         className='fw-bold'
                         style={{ color: '#0c4a6e', fontSize: '1rem' }}
                       >
-                        {application.currency_sign} {application.amount}
+                        {formatMoney(
+                          application.amount,
+                          application.currency_sign
+                        )}
                       </span>
                     </div>
 
@@ -301,8 +305,10 @@ const ApplicationDetailsReadOnlyPart = ({ application, assignedSolicitor }) => {
                         className='fw-bold'
                         style={{ color: '#16a34a', fontSize: '1rem' }}
                       >
-                        {application.currency_sign}{' '}
-                        {application.value_of_the_estate_after_expenses}
+                        {formatMoney(
+                          application.value_of_the_estate_after_expenses,
+                          application.currency_sign
+                        )}
                       </span>
                     </div>
 
@@ -664,7 +670,10 @@ const ApplicationDetailsReadOnlyPart = ({ application, assignedSolicitor }) => {
                             className='fw-bold'
                             style={{ color: '#16a34a', fontSize: '1rem' }}
                           >
-                            {application.currency_sign} {estate.value}
+                            {formatMoney(
+                              estate.value,
+                              application.currency_sign
+                            )}
                           </span>
                         </div>
                       </div>

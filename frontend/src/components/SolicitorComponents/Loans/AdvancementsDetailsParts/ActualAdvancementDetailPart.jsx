@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import LoadingComponent from '../../../GenericComponents/LoadingComponent';
-import { formatDate } from '../../../GenericFunctions/HelperGenericFunctions';
+import {
+  formatDate,
+  formatMoney,
+} from '../../../GenericFunctions/HelperGenericFunctions';
 
 const ActualAdvancementDetailPart = ({
   advancement,
@@ -66,7 +69,10 @@ const ActualAdvancementDetailPart = ({
                       className='fw-bold'
                       style={{ color: '#1e40af', fontSize: '1.1rem' }}
                     >
-                      {advancement.currency_sign} {advancement.current_balance}
+                      {formatMoney(
+                        advancement.current_balance,
+                        advancement.currency_sign
+                      )}
                     </span>
                   </div>
                 </div>
@@ -100,7 +106,10 @@ const ActualAdvancementDetailPart = ({
                         fontSize: '1rem',
                       }}
                     >
-                      {advancement.currency_sign} {advancement.amount_paid}
+                      {formatMoney(
+                        advancement.amount_paid,
+                        advancement.currency_sign
+                      )}
                     </span>
                   </div>
                 </div>
@@ -151,7 +160,10 @@ const ActualAdvancementDetailPart = ({
                           fontSize: '1rem',
                         }}
                       >
-                        {advancement.currency_sign} {advancement.fee_agreed}
+                        {formatMoney(
+                          advancement.fee_agreed,
+                          advancement.currency_sign
+                        )}
                       </span>
                     )}
                   </div>
@@ -188,8 +200,10 @@ const ActualAdvancementDetailPart = ({
                         fontSize: '1rem',
                       }}
                     >
-                      {advancement.currency_sign}{' '}
-                      {advancement.extension_fees_total}
+                      {formatMoney(
+                        advancement.extension_fees_total,
+                        advancement.currency_sign
+                      )}
                     </span>
                   </div>
                 </div>
@@ -277,7 +291,10 @@ const ActualAdvancementDetailPart = ({
                         className='fw-semibold'
                         style={{ color: '#374151', fontSize: '1rem' }}
                       >
-                        {advancement.currency_sign} {advancement.amount_agreed}
+                        {formatMoney(
+                          advancement.amount_agreed,
+                          advancement.currency_sign
+                        )}
                       </span>
                     )}
                   </div>

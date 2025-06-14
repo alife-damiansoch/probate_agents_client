@@ -1,4 +1,3 @@
-import Cookies from 'js-cookie';
 import { useEffect, useState } from 'react';
 import { FaBuilding, FaCog, FaFileInvoiceDollar, FaPlus } from 'react-icons/fa';
 import EstateSummarySticky from '../Applications/AddApplicationParts/FormParts/EstateSummarySticky';
@@ -7,11 +6,11 @@ import { estateFieldMap } from './EstatesManagerModalParts/estateFieldConfig';
 // Import the extracted functions
 import {
   formatFieldName,
+  formatMoney,
   getEstates,
 } from '../../GenericFunctions/HelperGenericFunctions';
 
 const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
-
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEstateModal, setShowEstateModal] = useState(false);
@@ -452,7 +451,10 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
                                     fontSize: '1rem',
                                   }}
                                 >
-                                  {application.currency_sign} {estate.value}
+                                  {formatMoney(
+                                    estate.value,
+                                    application.currency_sign
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -620,7 +622,10 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
                                     fontSize: '1rem',
                                   }}
                                 >
-                                  {application.currency_sign} {estate.value}
+                                  {formatMoney(
+                                    estate.value,
+                                    application.currency_sign
+                                  )}
                                 </div>
                               </div>
                             </div>

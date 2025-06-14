@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { patchData } from '../../GenericFunctions/AxiosGenericFunctions';
-import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
+import renderErrors, {
+  formatMoney,
+} from '../../GenericFunctions/HelperGenericFunctions';
 import ApplicantsPart from './ApplicantsPart';
 import EstatesPart from './EstatesPart';
 
@@ -169,14 +171,6 @@ const RequiredDetailsPart = ({
     submitChangesHandler();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerHandleChange]);
-
-  // Updated formatCurrency function to use application.currency_sign
-  const formatCurrency = (amount) => {
-    if (!application || !application.currency_sign) {
-      return `$${Number(amount).toFixed(2)}`;
-    }
-    return `${application.currency_sign}${Number(amount).toFixed(2)}`;
-  };
 
   const getEditIcon = (field) => {
     const isEditing = editMode[field];
@@ -385,7 +379,7 @@ const RequiredDetailsPart = ({
                 value={
                   editMode.amount
                     ? application.amount
-                    : formatCurrency(application.amount)
+                    : formatMoney(application.amount, application.currency_sign)
                 }
                 onChange={(e) => handleChange(e, 'amount')}
                 readOnly={!editMode.amount}

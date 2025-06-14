@@ -1,6 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
 import AssignedBadge from '../../GenericComponents/AssignedBadge';
-import { formatDate } from '../../GenericFunctions/HelperGenericFunctions';
+import {
+  formatDate,
+  formatMoney,
+} from '../../GenericFunctions/HelperGenericFunctions';
 
 const Advancement = ({ loan }) => {
   const navigate = useNavigate();
@@ -345,8 +348,8 @@ const Advancement = ({ loan }) => {
                           fontSize: '0.8rem',
                         }}
                       >
-                        <strong>Balance:</strong> {loan.currency_sign}
-                        {loan.current_balance}
+                        <strong>Balance:</strong>{' '}
+                        {formatMoney(loan.current_balance, loan.currency_sign)}
                       </td>
                     </tr>
                     <tr>
@@ -357,8 +360,8 @@ const Advancement = ({ loan }) => {
                           fontSize: '0.8rem',
                         }}
                       >
-                        <strong>Paid:</strong> {loan.currency_sign}
-                        {loan.amount_paid}
+                        <strong>Paid:</strong>{' '}
+                        {formatMoney(loan.amount_paid, loan.currency_sign)}
                       </td>
                     </tr>
                     <tr
@@ -377,8 +380,8 @@ const Advancement = ({ loan }) => {
                           fontSize: '0.8rem',
                         }}
                       >
-                        <strong>Fee:</strong> {loan.currency_sign}
-                        {loan.fee_agreed}
+                        <strong>Fee:</strong>{' '}
+                        {formatMoney(loan.fee_agreed, loan.currency_sign)}
                       </td>
                     </tr>
                     <tr>
@@ -389,8 +392,8 @@ const Advancement = ({ loan }) => {
                           fontSize: '0.8rem',
                         }}
                       >
-                        <strong>Amount:</strong> {loan.currency_sign}
-                        {loan.amount_agreed}
+                        <strong>Amount:</strong>{' '}
+                        {formatMoney(loan.amount_agreed, loan.currency_sign)}
                       </td>
                     </tr>
                   </tbody>

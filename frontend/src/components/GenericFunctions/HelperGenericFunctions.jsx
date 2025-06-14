@@ -132,3 +132,18 @@ export const getEstates = async (application) => {
     throw error; // Re-throw to let the calling component handle the error
   }
 };
+
+export function formatMoney(amount, currency = '') {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+
+  if (isNaN(numAmount)) {
+    return `${currency}0.00`;
+  }
+
+  const formatted = numAmount.toLocaleString('en-IE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return `${currency}${formatted}`;
+}

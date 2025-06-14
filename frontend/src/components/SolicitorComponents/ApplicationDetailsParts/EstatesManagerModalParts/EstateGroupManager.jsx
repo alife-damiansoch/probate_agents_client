@@ -1,3 +1,4 @@
+import { formatMoney } from '../../../GenericFunctions/HelperGenericFunctions';
 import { estateFieldMap } from './estateFieldConfig';
 
 const EstateGroupManager = ({
@@ -88,7 +89,7 @@ const EstateGroupManager = ({
                 {formatFieldName(key)}:
               </span>
               <span style={{ color: '#6b7280', marginLeft: '8px' }}>
-                {key === 'value' ? `${currency_sign}${val}` : val}
+                {key === 'value' ? formatMoney(val, currency_sign) : val}
               </span>
             </div>
           ))}
@@ -132,7 +133,7 @@ const EstateGroupManager = ({
               </span>
               <span style={{ color: '#6b7280', marginLeft: '8px' }}>
                 {field.name === 'value' || field.type === 'number'
-                  ? `${currency_sign}${value}`
+                  ? formatMoney(value, currency_sign)
                   : value}
               </span>
             </div>
@@ -242,8 +243,7 @@ const EstateGroupManager = ({
                         marginBottom: '4px',
                       }}
                     >
-                      {currency_sign}
-                      {estate.value}
+                      {formatMoney(estate.value, currency_sign)}
                     </div>
                   )}
                   {renderAllEstateFields(estate)}

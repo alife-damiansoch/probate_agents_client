@@ -10,6 +10,7 @@ import InProgressBadge from '../../GenericComponents/StageBadges/InProgressBadge
 import PaidOutBadge from '../../GenericComponents/StageBadges/PaidOutBadge';
 import RejectedBadge from '../../GenericComponents/StageBadges/RejectedBadge';
 import SettledBadge from '../../GenericComponents/StageBadges/SettledBadge';
+import { formatMoney } from '../../GenericFunctions/HelperGenericFunctions';
 
 const Application = ({ application }) => {
   const [formData] = useState({ ...application });
@@ -216,7 +217,7 @@ const Application = ({ application }) => {
                         className='fw-semibold'
                         style={{ fontSize: '0.85rem', color: '#1e293b' }}
                       >
-                        {formData.amount}
+                        {formatMoney(formData.amount)}
                       </span>
                     </div>
                     <div className='d-flex align-items-center gap-1'>
