@@ -11,7 +11,7 @@ import {
 } from '../../GenericFunctions/HelperGenericFunctions';
 
 const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
-  const currency_sign = Cookies.get('currency_sign');
+
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEstateModal, setShowEstateModal] = useState(false);
@@ -239,7 +239,7 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
           estates={estates}
           applicationId={application.id}
           refreshEstates={() => setRefresh(!refresh)}
-          currency_sign={currency_sign}
+          currency_sign={application.currency_sign}
           isAdmin={isAdmin}
         />
       </div>
@@ -452,7 +452,7 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
                                     fontSize: '1rem',
                                   }}
                                 >
-                                  {currency_sign} {estate.value}
+                                  {application.currency_sign} {estate.value}
                                 </div>
                               </div>
                             </div>
@@ -620,7 +620,7 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
                                     fontSize: '1rem',
                                   }}
                                 >
-                                  {currency_sign} {estate.value}
+                                  {application.currency_sign} {estate.value}
                                 </div>
                               </div>
                             </div>
@@ -667,7 +667,7 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
         <EstateSummarySticky
           estates={estates}
           formData={application}
-          currency_sign={currency_sign}
+          currency_sign={application.currency_sign}
         />
       </div>
 
@@ -677,7 +677,7 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
         estates={estates}
         applicationId={application.id}
         refreshEstates={() => setRefresh(!refresh)}
-        currency_sign={currency_sign}
+        currency_sign={application.currency_sign}
         isAdmin={isAdmin}
       />
     </div>
