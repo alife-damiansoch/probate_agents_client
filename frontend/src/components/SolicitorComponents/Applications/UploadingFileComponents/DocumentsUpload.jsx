@@ -767,34 +767,34 @@ const DocumentsUpload = ({ applicationId, refresh, setRefresh, user }) => {
             No documents have been uploaded for this application yet. Get
             started by uploading your first document.
           </p>
-          <button
-            className='btn px-5 py-3 fw-semibold rounded-4 d-inline-flex align-items-center gap-3'
-            style={{
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              color: 'white',
-              border: 'none',
-              fontSize: '0.95rem',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-            onClick={() => navigate(`/upload_new_document/${applicationId}`)}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 12px 24px rgba(245, 158, 11, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = 'none';
-            }}
-          >
-            <svg width='20' height='20' fill='currentColor' viewBox='0 0 20 20'>
-              <path
-                fillRule='evenodd'
-                d='M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z'
-                clipRule='evenodd'
-              />
-            </svg>
-            Upload First Document
-          </button>
+          {/*<button*/}
+          {/*  className='btn px-5 py-3 fw-semibold rounded-4 d-inline-flex align-items-center gap-3'*/}
+          {/*  style={{*/}
+          {/*    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',*/}
+          {/*    color: 'white',*/}
+          {/*    border: 'none',*/}
+          {/*    fontSize: '0.95rem',*/}
+          {/*    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',*/}
+          {/*  }}*/}
+          {/*  onClick={() => navigate(`/upload_new_document/${applicationId}`)}*/}
+          {/*  onMouseEnter={(e) => {*/}
+          {/*    e.target.style.transform = 'translateY(-2px)';*/}
+          {/*    e.target.style.boxShadow = '0 12px 24px rgba(245, 158, 11, 0.4)';*/}
+          {/*  }}*/}
+          {/*  onMouseLeave={(e) => {*/}
+          {/*    e.target.style.transform = 'translateY(0)';*/}
+          {/*    e.target.style.boxShadow = 'none';*/}
+          {/*  }}*/}
+          {/*>*/}
+          {/*  <svg width='20' height='20' fill='currentColor' viewBox='0 0 20 20'>*/}
+          {/*    <path*/}
+          {/*      fillRule='evenodd'*/}
+          {/*      d='M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z'*/}
+          {/*      clipRule='evenodd'*/}
+          {/*    />*/}
+          {/*  </svg>*/}
+          {/*  Upload First Document*/}
+          {/*</button>*/}
         </div>
       )}
 

@@ -4,42 +4,49 @@ import {
   formatCategoryName,
   getEstates,
 } from '../../../GenericFunctions/HelperGenericFunctions';
+import { fetchData } from '../../../GenericFunctions/AxiosGenericFunctions';
+import Cookies from 'js-cookie';
 
 const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
   const [estates, setEstates] = useState([]);
+  const [requirementStatus, setRequirementStatus] = useState(null);
+  const [requirements, setRequirements] = useState([]);
 
-  useEffect(() => {
-    if (application) {
-      console.log('application', application);
-      if (!application.loan_agreement_ready) {
-        const newIssues = [];
+  console.log("APPLICATION ->" , application);
 
-        if (!application.loan_agreement_ready) {
-          newIssues.push('Advancement agreement is not ready.');
-        }
+  // Extract token
+  let tokenObj = Cookies.get('auth_token');
+  let token = null;
+  if (tokenObj) {
+    tokenObj = JSON.parse(tokenObj);
+    token = tokenObj.access;
+  }
 
-        if (!application.undertaking_ready) {
-          newIssues.push('Undertaking is not ready.');
-        }
-
-        if (application.signed_documents.length === 0) {
-          newIssues.push('No signed documents available.');
-        }
-
-        if (
-          application.value_of_the_estate_after_expenses * 0.6 <
-          application.amount
-        ) {
-          newIssues.push(
-            'Check the amounts. 60% of the total value after expenses is less than requested advancement amount.'
-          );
-        }
-
-        // Update the issues state with any new issues found
-        setIssues(newIssues);
+  // Fetch requirement status
+  const fetchRequirementStatus = async () => {
+    if (token && application?.id) {
+      try {
+        const endpoint = `/api/applications/${application.id}/requirement-status/`;
+        const response = await fetchData(token, endpoint);
+        setRequirementStatus(response.data);
+      } catch (error) {
+        console.error('Error fetching requirement status:', error);
       }
     }
-  }, [application, setIssues]);
+  };
+
+  // Fetch requirements
+  const fetchRequirements = async () => {
+    if (token && application?.id) {
+      try {
+        const endpoint = `/api/applications/${application.id}/document-requirements/`;
+        const response = await fetchData(token, endpoint);
+        setRequirements(response.data);
+      } catch (error) {
+        console.error('Error fetching requirements:', error);
+      }
+    }
+  };
 
   // Fetch estates when application.estate_summary changes
   useEffect(() => {
@@ -56,7 +63,110 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
     if (application) {
       fetchEstates();
     }
-  }, [application.estate_summary]);
+  }, [application?.estate_summary]);
+
+  // Fetch requirement data only when application ID changes
+  useEffect(() => {
+    if (application?.id) {
+      fetchRequirementStatus();
+      fetchRequirements();
+    }
+  }, [application?.id]);
+
+  // Calculate issues - generalized version
+  useEffect(() => {
+    if (application) {
+      const newIssues = [];
+
+      // Check if application is approved
+      if (!application.approved && !application.is_rejected) {
+        // Check missing document requirements - check both sources
+        let missingRequirementsCount = 0;
+
+        // First try to use requirementStatus if available
+        if (requirementStatus?.missing_count > 0) {
+          missingRequirementsCount = requirementStatus.missing_count;
+        }
+        // Fallback to checking requirements array directly
+        else if (requirements && requirements.length > 0) {
+          const missingRequirements = requirements.filter(req => !req.is_uploaded);
+          missingRequirementsCount = missingRequirements.length;
+        }
+
+        if (missingRequirementsCount > 0) {
+          newIssues.push(
+            `${missingRequirementsCount} required document${missingRequirementsCount > 1 ? 's' : ''} not uploaded.`
+          );
+        }
+
+        // Check for pending signatures in requirements
+        const pendingSignatures = requirements.filter(req =>
+          req.is_uploaded &&
+          req.document_type?.signature_required &&
+          req.uploaded_document &&
+          !req.uploaded_document.is_signed
+        );
+
+        if (pendingSignatures.length > 0) {
+          newIssues.push(
+            `${pendingSignatures.length} uploaded document${pendingSignatures.length > 1 ? 's' : ''} require${pendingSignatures.length === 1 ? 's' : ''} signature.`
+          );
+        }
+
+        // Check for documents that need signatures but are not signed
+        const unsignedDocs = application.documents?.filter(doc =>
+          doc.signature_required && !doc.is_signed
+        ) || [];
+
+        if (unsignedDocs.length > 0) {
+          newIssues.push(
+            `${unsignedDocs.length} document${unsignedDocs.length > 1 ? 's' : ''} require${unsignedDocs.length === 1 ? 's' : ''} signature.`
+          );
+        }
+
+        // Check estate value vs amount (if applicable)
+        if (application.value_of_the_estate_after_expenses && application.amount) {
+          const maxAllowedAmount = application.value_of_the_estate_after_expenses * 0.6;
+          if (maxAllowedAmount < parseFloat(application.amount)) {
+            newIssues.push(
+              'Check the amounts. 60% of the total value after expenses is less than requested advancement amount.'
+            );
+          }
+        }
+
+        // Check if no documents are uploaded at all
+        const totalDocuments = (application.documents?.length || 0) + (application.signed_documents?.length || 0);
+        if (totalDocuments === 0) {
+          newIssues.push('No documents uploaded.');
+        }
+      }
+
+      // Only update issues if they have actually changed
+      const issuesChanged = JSON.stringify(newIssues) !== JSON.stringify(issues);
+      if (issuesChanged) {
+        setIssues(newIssues);
+      }
+    }
+  }, [
+    application?.id,
+    application?.approved,
+    application?.is_rejected,
+    application?.value_of_the_estate_after_expenses,
+    application?.amount,
+    application?.documents?.length,
+    application?.signed_documents?.length,
+    // Check individual document signatures
+    application?.documents?.map(doc => `${doc.id}-${doc.signature_required}-${doc.is_signed}`).join(','),
+    application?.signed_documents?.map(doc => `${doc.id}-${doc.is_signed}`).join(','),
+    requirementStatus?.missing_count,
+    requirementStatus?.uploaded_count,
+    requirementStatus?.total_requirements,
+    requirements?.length,
+    // Check individual requirement upload status
+    requirements?.map(req => `${req.id}-${req.is_uploaded}-${req.document_type?.signature_required}-${req.uploaded_document?.is_signed}`).join(','),
+    issues,
+    setIssues
+  ]);
 
   // Updated formatCurrency function to use application.currency_sign
   const formatCurrency = (amount) => {
@@ -89,6 +199,28 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
     );
   };
 
+  const getApplicationStatusBadge = () => {
+    if (application.approved) {
+      return (
+        <span className="badge" style={{ backgroundColor: '#059669', color: 'white', fontSize: '0.75rem' }}>
+          Approved
+        </span>
+      );
+    } else if (application.is_rejected) {
+      return (
+        <span className="badge" style={{ backgroundColor: '#dc2626', color: 'white', fontSize: '0.75rem' }}>
+          Rejected
+        </span>
+      );
+    } else {
+      return (
+        <span className="badge" style={{ backgroundColor: '#d97706', color: 'white', fontSize: '0.75rem' }}>
+          Pending
+        </span>
+      );
+    }
+  };
+
   return (
     <>
       {application && (
@@ -108,22 +240,69 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
                 color: 'white',
               }}
             >
-              <h5 className='mb-0 fw-bold d-flex align-items-center gap-2'>
-                <svg
-                  width='20'
-                  height='20'
-                  fill='currentColor'
-                  viewBox='0 0 20 20'
-                >
-                  <path
-                    fillRule='evenodd'
-                    d='M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z'
-                    clipRule='evenodd'
-                  />
-                </svg>
-                Application Summary
-              </h5>
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className='mb-0 fw-bold d-flex align-items-center gap-2'>
+                  <svg
+                    width='20'
+                    height='20'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path
+                      fillRule='evenodd'
+                      d='M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z'
+                      clipRule='evenodd'
+                    />
+                  </svg>
+                  Application Summary
+                </h5>
+                {getApplicationStatusBadge()}
+              </div>
             </div>
+
+            {/* Issues - Only show if application is not approved and not rejected */}
+            {!application.approved && !application.is_rejected && issues.length > 0 && (
+              <div className='mb-4'>
+                <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
+                  Issues Detected ({issues.length})
+                </h6>
+                <div
+                  className='p-4 rounded-3'
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                  }}
+                >
+                  <div className='d-flex align-items-center gap-2 mb-3'>
+                    <svg
+                      width='20'
+                      height='20'
+                      fill='#dc2626'
+                      viewBox='0 0 20 20'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                    <span className='fw-bold' style={{ color: '#dc2626' }}>
+                      Attention Required
+                    </span>
+                  </div>
+                  <ul className='mb-0' style={{ color: '#7f1d1d' }}>
+                    {issues.map((issue, index) => (
+                      <li
+                        key={index}
+                        style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}
+                      >
+                        {issue}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
 
             {/* Application Details */}
             <div className='mb-4'>
@@ -161,18 +340,20 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
                         {formatCurrency(application.amount)}
                       </span>
                     </div>
+                    {application.term && (
+                      <div className='d-flex justify-content-between align-items-center mb-2'>
+                        <span
+                          className='fw-semibold'
+                          style={{ color: '#475569' }}
+                        >
+                          Term
+                        </span>
+                        <span className='fw-bold' style={{ color: '#1e293b' }}>
+                          {application.term} months
+                        </span>
+                      </div>
+                    )}
                     <div className='d-flex justify-content-between align-items-center mb-2'>
-                      <span
-                        className='fw-semibold'
-                        style={{ color: '#475569' }}
-                      >
-                        Term
-                      </span>
-                      <span className='fw-bold' style={{ color: '#1e293b' }}>
-                        {application.term} months
-                      </span>
-                    </div>
-                    <div className='d-flex justify-content-between align-items-center'>
                       <span
                         className='fw-semibold'
                         style={{ color: '#475569' }}
@@ -185,190 +366,155 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
                         ).toLocaleDateString()}
                       </span>
                     </div>
+                    {application.assigned_to_email && (
+                      <div className='d-flex justify-content-between align-items-center'>
+                        <span
+                          className='fw-semibold'
+                          style={{ color: '#475569' }}
+                        >
+                          Assigned To
+                        </span>
+                        <span className='fw-bold' style={{ color: '#1e293b' }}>
+                          {application.assigned_to_email}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Status Checks */}
-            <div className='mb-4'>
-              <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
-                Status Checks
-              </h6>
-              <div className='d-flex flex-column gap-2'>
+            {/* Document Requirements Summary */}
+            {requirementStatus && requirementStatus.total_requirements > 0 && (
+              <div className='mb-4'>
+                <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
+                  Document Requirements ({requirementStatus.uploaded_count}/{requirementStatus.total_requirements})
+                </h6>
                 <div
-                  className='d-flex align-items-center justify-content-between p-3 rounded-3'
+                  className='p-3 rounded-3'
                   style={{
-                    backgroundColor: application.loan_agreement_ready
-                      ? '#f0fdf4'
-                      : '#fef2f2',
-                    border: `1px solid ${
-                      application.loan_agreement_ready ? '#bbf7d0' : '#fecaca'
-                    }`,
+                    backgroundColor: requirementStatus.missing_count === 0 ? '#f0fdf4' : '#fef2f2',
+                    border: `1px solid ${requirementStatus.missing_count === 0 ? '#bbf7d0' : '#fecaca'}`,
                   }}
                 >
-                  <span
-                    className='fw-semibold'
-                    style={{
-                      color: application.loan_agreement_ready
-                        ? '#059669'
-                        : '#dc2626',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    Advancement Agreement
-                  </span>
-                  {getStatusIcon(application.loan_agreement_ready)}
+                  <div className='d-flex align-items-center justify-content-between'>
+                    <span
+                      className='fw-semibold'
+                      style={{
+                        color: requirementStatus.missing_count === 0 ? '#059669' : '#dc2626',
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      {requirementStatus.missing_count === 0
+                        ? 'All requirements fulfilled'
+                        : `${requirementStatus.missing_count} requirement${requirementStatus.missing_count > 1 ? 's' : ''} missing`
+                      }
+                    </span>
+                    {getStatusIcon(requirementStatus.missing_count === 0)}
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* Deceased Information */}
+            {application.deceased && (
+              <div className='mb-4'>
+                <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
+                  Deceased Information
+                </h6>
                 <div
-                  className='d-flex align-items-center justify-content-between p-3 rounded-3'
+                  className='p-3 rounded-3'
                   style={{
-                    backgroundColor: application.undertaking_ready
-                      ? '#f0fdf4'
-                      : '#fef2f2',
-                    border: `1px solid ${
-                      application.undertaking_ready ? '#bbf7d0' : '#fecaca'
-                    }`,
+                    backgroundColor: '#fefbf3',
+                    border: '1px solid #fed7aa',
                   }}
                 >
-                  <span
-                    className='fw-semibold'
-                    style={{
-                      color: application.undertaking_ready
-                        ? '#059669'
-                        : '#dc2626',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    Undertaking
-                  </span>
-                  {getStatusIcon(application.undertaking_ready)}
-                </div>
-                <div
-                  className='d-flex align-items-center justify-content-between p-3 rounded-3'
-                  style={{
-                    backgroundColor:
-                      application?.documents?.length > 0 ||
-                      application?.signed_documents?.length > 0
-                        ? '#f0fdf4'
-                        : '#fef2f2',
-                    border: `1px solid ${
-                      application?.documents?.length > 0 ||
-                      application?.signed_documents?.length > 0
-                        ? '#bbf7d0'
-                        : '#fecaca'
-                    }`,
-                  }}
-                >
-                  <span
-                    className='fw-semibold'
-                    style={{
-                      color:
-                        application?.documents?.length > 0 ||
-                        application?.signed_documents?.length > 0
-                          ? '#059669'
-                          : '#dc2626',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    Documents Uploaded
-                  </span>
-                  {getStatusIcon(
-                    application?.documents?.length > 0 ||
-                      application?.signed_documents?.length > 0
+                  <div className='d-flex justify-content-between align-items-center mb-2'>
+                    <span className='fw-semibold' style={{ color: '#92400e' }}>
+                      Name
+                    </span>
+                    <span className='fw-bold' style={{ color: '#78350f' }}>
+                      {application.deceased.first_name}{' '}
+                      {application.deceased.last_name}
+                    </span>
+                  </div>
+                  {application.value_of_the_estate_after_expenses && (
+                    <div className='d-flex justify-content-between align-items-center'>
+                      <span className='fw-semibold' style={{ color: '#92400e' }}>
+                        Estate Value
+                      </span>
+                      <span className='fw-bold' style={{ color: '#78350f' }}>
+                        {formatCurrency(
+                          application.value_of_the_estate_after_expenses
+                        )}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* Deceased Information */}
-            <div className='mb-4'>
-              <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
-                Deceased Information
-              </h6>
-              <div
-                className='p-3 rounded-3'
-                style={{
-                  backgroundColor: '#fefbf3',
-                  border: '1px solid #fed7aa',
-                }}
-              >
-                <div className='d-flex justify-content-between align-items-center mb-2'>
-                  <span className='fw-semibold' style={{ color: '#92400e' }}>
-                    Name
-                  </span>
-                  <span className='fw-bold' style={{ color: '#78350f' }}>
-                    {application.deceased.first_name}{' '}
-                    {application.deceased.last_name}
-                  </span>
-                </div>
-                <div className='d-flex justify-content-between align-items-center'>
-                  <span className='fw-semibold' style={{ color: '#92400e' }}>
-                    Estate Value
-                  </span>
-                  <span className='fw-bold' style={{ color: '#78350f' }}>
-                    {formatCurrency(
-                      application.value_of_the_estate_after_expenses
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* Dispute Details */}
-            <div className='mb-4'>
-              <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
-                Dispute Details
-              </h6>
-              <div
-                className='p-3 rounded-3'
-                style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                }}
-              >
-                <p
-                  className='mb-0'
-                  style={{ color: '#475569', fontSize: '0.875rem' }}
+            {application.dispute && (
+              <div className='mb-4'>
+                <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
+                  Dispute Details
+                </h6>
+                <div
+                  className='p-3 rounded-3'
+                  style={{
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                  }}
                 >
-                  {application.dispute.details}
-                </p>
+                  <p
+                    className='mb-0'
+                    style={{ color: '#475569', fontSize: '0.875rem' }}
+                  >
+                    {application.dispute.details}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Applicants */}
-            <div className='mb-4'>
-              <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
-                Applicants ({application.applicants.length})
-              </h6>
-              <div className='d-flex flex-column gap-2'>
-                {application.applicants.map((applicant, index) => (
-                  <div
-                    key={index}
-                    className='p-3 rounded-3'
-                    style={{
-                      backgroundColor: '#f0f9ff',
-                      border: '1px solid #bae6fd',
-                    }}
-                  >
-                    <div className='d-flex justify-content-between align-items-center mb-1'>
-                      <span
-                        className='fw-bold'
-                        style={{ color: '#0c4a6e', fontSize: '0.875rem' }}
-                      >
-                        {applicant.title} {applicant.first_name}{' '}
-                        {applicant.last_name}
-                      </span>
+            {application.applicants && application.applicants.length > 0 && (
+              <div className='mb-4'>
+                <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
+                  Applicants ({application.applicants.length})
+                </h6>
+                <div className='d-flex flex-column gap-2'>
+                  {application.applicants.map((applicant, index) => (
+                    <div
+                      key={index}
+                      className='p-3 rounded-3'
+                      style={{
+                        backgroundColor: '#f0f9ff',
+                        border: '1px solid #bae6fd',
+                      }}
+                    >
+                      <div className='d-flex justify-content-between align-items-center mb-1'>
+                        <span
+                          className='fw-bold'
+                          style={{ color: '#0c4a6e', fontSize: '0.875rem' }}
+                        >
+                          {applicant.title && `${applicant.title} `}
+                          {applicant.first_name}{' '}
+                          {applicant.last_name}
+                        </span>
+                      </div>
+                      {applicant.pps_number && (
+                        <div className='d-flex justify-content-between align-items-center'>
+                          <span style={{ color: '#0369a1', fontSize: '0.75rem' }}>
+                            PPS: {applicant.pps_number}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className='d-flex justify-content-between align-items-center'>
-                      <span style={{ color: '#0369a1', fontSize: '0.75rem' }}>
-                        PPS: {applicant.pps_number}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Estates */}
             {estates && estates.length > 0 && (
@@ -417,14 +563,17 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
                       key={`doc-${index}`}
                       className='p-3 rounded-3 d-flex align-items-center gap-2'
                       style={{
-                        backgroundColor: '#fefbf3',
-                        border: '1px solid #fed7aa',
+                        backgroundColor: doc.is_signed ? '#f0fdf4' :
+                          (doc.signature_required ? '#fef2f2' : '#fefbf3'),
+                        border: `1px solid ${doc.is_signed ? '#bbf7d0' : 
+                          (doc.signature_required ? '#fecaca' : '#fed7aa')}`,
                       }}
                     >
                       <svg
                         width='16'
                         height='16'
-                        fill='#d97706'
+                        fill={doc.is_signed ? '#059669' :
+                          (doc.signature_required ? '#dc2626' : '#d97706')}
                         viewBox='0 0 20 20'
                       >
                         <path
@@ -433,8 +582,16 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
                           clipRule='evenodd'
                         />
                       </svg>
-                      <span style={{ color: '#92400e', fontSize: '0.875rem' }}>
+                      <span
+                        style={{
+                          color: doc.is_signed ? '#059669' :
+                            (doc.signature_required ? '#dc2626' : '#92400e'),
+                          fontSize: '0.875rem'
+                        }}
+                      >
                         {doc.original_name}
+                        {doc.is_signed && ' (Signed)'}
+                        {doc.signature_required && !doc.is_signed && ' (Signature Required)'}
                       </span>
                     </div>
                   ))}
@@ -469,101 +626,67 @@ const ApplicationSummaryCard = ({ application, issues, setIssues }) => {
             )}
 
             {/* User Information */}
-            <div className='mb-4'>
-              <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
-                Contact Information
-              </h6>
-              <div
-                className='p-3 rounded-3'
-                style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                }}
-              >
-                <div className='d-flex justify-content-between align-items-center mb-2'>
-                  <span className='fw-semibold' style={{ color: '#475569' }}>
-                    Name
-                  </span>
-                  <span className='fw-bold' style={{ color: '#1e293b' }}>
-                    {application.user.name}
-                  </span>
-                </div>
-                <div className='d-flex justify-content-between align-items-center mb-2'>
-                  <span className='fw-semibold' style={{ color: '#475569' }}>
-                    Email
-                  </span>
-                  <span style={{ color: '#1e293b', fontSize: '0.875rem' }}>
-                    {application.user.email}
-                  </span>
-                </div>
-                <div className='d-flex justify-content-between align-items-center mb-2'>
-                  <span className='fw-semibold' style={{ color: '#475569' }}>
-                    Phone
-                  </span>
-                  <span style={{ color: '#1e293b', fontSize: '0.875rem' }}>
-                    {application.user.phone_number}
-                  </span>
-                </div>
-                <div className='d-flex justify-content-between align-items-start'>
-                  <span className='fw-semibold' style={{ color: '#475569' }}>
-                    Address
-                  </span>
-                  <span
-                    style={{
-                      color: '#1e293b',
-                      fontSize: '0.875rem',
-                      textAlign: 'right',
-                    }}
-                  >
-                    {application.user.address.line1},{' '}
-                    {application.user.address.line2},{' '}
-                    {application.user.address.town_city},{' '}
-                    {application.user.address.county}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Issues - if any */}
-            {issues.length > 0 && (
+            {application.user && (
               <div className='mb-0'>
                 <h6 className='fw-bold mb-3' style={{ color: '#111827' }}>
-                  Issues Detected ({issues.length})
+                  Contact Information
                 </h6>
                 <div
-                  className='p-4 rounded-3'
+                  className='p-3 rounded-3'
                   style={{
-                    backgroundColor: '#fef2f2',
-                    border: '1px solid #fecaca',
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                   }}
                 >
-                  <div className='d-flex align-items-center gap-2 mb-3'>
-                    <svg
-                      width='20'
-                      height='20'
-                      fill='#dc2626'
-                      viewBox='0 0 20 20'
-                    >
-                      <path
-                        fillRule='evenodd'
-                        d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                    <span className='fw-bold' style={{ color: '#dc2626' }}>
-                      Attention Required
-                    </span>
-                  </div>
-                  <ul className='mb-0' style={{ color: '#7f1d1d' }}>
-                    {issues.map((issue, index) => (
-                      <li
-                        key={index}
-                        style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}
+                  {application.user.name && (
+                    <div className='d-flex justify-content-between align-items-center mb-2'>
+                      <span className='fw-semibold' style={{ color: '#475569' }}>
+                        Name
+                      </span>
+                      <span className='fw-bold' style={{ color: '#1e293b' }}>
+                        {application.user.name}
+                      </span>
+                    </div>
+                  )}
+                  {application.user.email && (
+                    <div className='d-flex justify-content-between align-items-center mb-2'>
+                      <span className='fw-semibold' style={{ color: '#475569' }}>
+                        Email
+                      </span>
+                      <span style={{ color: '#1e293b', fontSize: '0.875rem' }}>
+                        {application.user.email}
+                      </span>
+                    </div>
+                  )}
+                  {application.user.phone_number && (
+                    <div className='d-flex justify-content-between align-items-center mb-2'>
+                      <span className='fw-semibold' style={{ color: '#475569' }}>
+                        Phone
+                      </span>
+                      <span style={{ color: '#1e293b', fontSize: '0.875rem' }}>
+                        {application.user.phone_number}
+                      </span>
+                    </div>
+                  )}
+                  {application.user.address && (
+                    <div className='d-flex justify-content-between align-items-start'>
+                      <span className='fw-semibold' style={{ color: '#475569' }}>
+                        Address
+                      </span>
+                      <span
+                        style={{
+                          color: '#1e293b',
+                          fontSize: '0.875rem',
+                          textAlign: 'right',
+                        }}
                       >
-                        {issue}
-                      </li>
-                    ))}
-                  </ul>
+                        {application.user.address.line1}
+                        {application.user.address.line2 && `, ${application.user.address.line2}`}
+                        {application.user.address.town_city && `, ${application.user.address.town_city}`}
+                        {application.user.address.county && `, ${application.user.address.county}`}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
