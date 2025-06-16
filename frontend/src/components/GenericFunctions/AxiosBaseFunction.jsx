@@ -31,6 +31,7 @@ export const refreshToken = async () => {
       {
         secure: true,
         sameSite: 'strict',
+        path: '/',
       }
     );
     return Promise.resolve(response);
@@ -59,6 +60,17 @@ apiClient.interceptors.request.use((config) => {
   config.headers['Authorization'] = `Bearer ${access}`;
   config.headers['Country'] = country;
 
+  // Add API key header as fallback for incognito/mobile
+  const apiKey = sessionStorage.getItem('frontend_api_key');
+  const userType = sessionStorage.getItem('user_type');
+
+  if (apiKey) {
+    const headerName =
+      userType === 'staff' ? 'X-Frontend-API-Key-Agents' : 'X-Frontend-API-Key';
+    config.headers[headerName] = apiKey;
+    console.log(`Added API key header: ${headerName}`);
+  }
+
   return config;
 });
 
@@ -73,7 +85,9 @@ apiClient.interceptors.response.use(
       response.headers.get('x-api-key-expiration-agents')
     );
     // ✅ Capture API Key Expiration and Broadcast Event
-    const apiKeyExpiration = response.headers['x-api-key-expiration-agents'];
+    const apiKeyExpiration =
+      response.headers['x-api-key-expiration-agents'] ||
+      response.headers['x-api-key-expiration'];
     if (apiKeyExpiration) {
       apiEventEmitter.emit('apiKeyExpirationUpdated', apiKeyExpiration);
     }
@@ -85,9 +99,11 @@ apiClient.interceptors.response.use(
     // Check for network error
     if (error.message === 'Network Error' && error.response === undefined) {
       error.message = 'Unable to connect to server. Please try again later.';
-    } else if (
-      error.response.status === 403 &&
-      error.response.data.error &&
+    }
+    // Handle all API key related 403 errors
+    else if (
+      error.response?.status === 403 &&
+      error.response?.data?.error &&
       [
         'Forbidden: Missing API key in request',
         'Forbidden: API key expired',
@@ -105,7 +121,7 @@ apiClient.interceptors.response.use(
     }
     // Handle 401 status errors
     else if (
-      error.response.status === 401 &&
+      error.response?.status === 401 &&
       error.config.url !== refreshTokenEndpoint
     ) {
       // Check for "user_inactive" error code in the response data
@@ -124,10 +140,24 @@ apiClient.interceptors.response.use(
         // Update the authorization header with the new access token
         error.config.headers['Authorization'] = `Bearer ${access}`;
 
+        // Re-add the API key header if it exists
+        const apiKey = sessionStorage.getItem('frontend_api_key');
+        const userType = sessionStorage.getItem('user_type');
+
+        if (apiKey) {
+          const headerName =
+            userType === 'staff'
+              ? 'X-Frontend-API-Key-Agents'
+              : 'X-Frontend-API-Key';
+          error.config.headers[headerName] = apiKey;
+        }
+
         // Retry the failed request with the new token
         return apiClient.request(error.config);
       } catch {
         // Handle errors during the token refresh process (e.g., log out the user)
+        console.log('Token refresh failed, logging out user');
+        apiEventEmitter.emit('logoutRequired');
       }
     }
 

@@ -1,13 +1,13 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { API_URL } from '../baseUrls';
 import Cookies from 'js-cookie';
+import { API_URL } from '../baseUrls';
 
 export const signup = createAsyncThunk(
   'auth/signup',
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      console.log("🔍 API_URL:", API_URL); // Debug log
+      console.log('🔍 API_URL:', API_URL); // Debug log
       const country = Cookies.get('country');
       const response = await axios.post(
         `${API_URL}/api/user/token/`,
@@ -53,17 +53,29 @@ export const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       Cookies.remove('auth_token_agents'); // Clear the token from cookies
+      // Clear sessionStorage items
+      sessionStorage.removeItem('frontend_api_key');
+      sessionStorage.removeItem('user_type');
     },
     loginSuccess: (state, action) => {
       state.token = action.payload.tokenObj;
       state.isLoggedIn = true;
       state.loading = false;
       state.error = null;
-      const { access, refresh } = action.payload.tokenObj;
+      const { access, refresh, api_key, user_type } = action.payload.tokenObj;
+
+      // Set cookies
       Cookies.set('auth_token_agents', JSON.stringify({ access, refresh }), {
         secure: true,
         sameSite: 'strict',
-      }); // Set the token in cookies
+        path: '/',
+      });
+
+      // Store API key and user type in sessionStorage as fallback
+      if (api_key) {
+        sessionStorage.setItem('frontend_api_key', api_key);
+        sessionStorage.setItem('user_type', user_type || 'regular');
+      }
     },
     setNewTokens: (state, action) => {
       const { newAccess } = action.payload;
@@ -78,8 +90,9 @@ export const authSlice = createSlice({
         {
           secure: import.meta.env.PROD,
           sameSite: 'strict',
+          path: '/',
         }
-      ); // Set the new tokens in cookies
+      );
     },
     clearAuthError: (state) => {
       state.error = null;
@@ -88,11 +101,21 @@ export const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(signup.fulfilled, (state, action) => {
-        const { access, refresh } = action.payload;
+        const { access, refresh, api_key, user_type } = action.payload;
+
+        // Set cookies
         Cookies.set('auth_token_agents', JSON.stringify({ access, refresh }), {
           secure: import.meta.env.PROD,
           sameSite: 'strict',
-        }); // Set the token in cookies
+          path: '/',
+        });
+
+        // Store API key and user type in sessionStorage as fallback
+        if (api_key) {
+          sessionStorage.setItem('frontend_api_key', api_key);
+          sessionStorage.setItem('user_type', user_type || 'regular');
+        }
+
         state.token = action.payload;
         state.isLoggedIn = true;
         state.loading = false;

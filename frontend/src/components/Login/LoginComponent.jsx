@@ -1,7 +1,7 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
-import { signup, clearAuthError } from '../../store/authSlice';
+import { Link, useNavigate } from 'react-router-dom';
+import { clearAuthError, signup } from '../../store/authSlice';
 import renderErrors from '../GenericFunctions/HelperGenericFunctions';
 
 const LoginComponent = () => {
@@ -23,8 +23,18 @@ const LoginComponent = () => {
     const resultAction = await dispatch(signup({ email, password }));
 
     if (signup.fulfilled.match(resultAction)) {
-      navigate('/applications_active');
-      setIsLoading(false);
+      // Wait a moment for cookies to be set
+      setTimeout(() => {
+        // Verify cookie exists before navigating
+        const authToken = Cookies.get('auth_token_agents');
+        if (authToken) {
+          navigate('/applications_active');
+        } else {
+          console.error('Auth token not found in cookies');
+          // Retry or show error
+        }
+        setIsLoading(false);
+      }, 100); // Small delay to ensure cookies are set
     } else if (signup.rejected.match(resultAction)) {
       console.error('Login error:', resultAction.payload);
       setIsLoading(false);
