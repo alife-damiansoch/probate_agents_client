@@ -14,7 +14,14 @@ import renderErrors from '../../../GenericFunctions/HelperGenericFunctions.jsx';
 import ManageDocumentsButton from './ManageDocumentsButton.jsx';
 import ManageDocumentsModal from './ManageDocumentsModal.jsx';
 
-const DocumentsUpload = ({ applicationId, refresh, setRefresh, user }) => {
+const DocumentsUpload = ({
+  applicationId,
+  refresh,
+  setRefresh,
+  user,
+  currentRequirements,
+  setCurrentRequirements,
+}) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -22,7 +29,7 @@ const DocumentsUpload = ({ applicationId, refresh, setRefresh, user }) => {
 
   // Document requirements state (moved from modal)
   const [availableDocumentTypes, setAvailableDocumentTypes] = useState([]);
-  const [currentRequirements, setCurrentRequirements] = useState([]);
+
   const [loadingRequirements, setLoadingRequirements] = useState(false);
 
   // Tooltip state
@@ -103,7 +110,7 @@ const DocumentsUpload = ({ applicationId, refresh, setRefresh, user }) => {
     };
 
     fetchDocumentData();
-  }, [token, applicationId, refresh]);
+  }, [token, applicationId, refresh, setCurrentRequirements]);
 
   const downloadFile = async (fileUrl) => {
     const fileName = fileUrl.split('/').pop();

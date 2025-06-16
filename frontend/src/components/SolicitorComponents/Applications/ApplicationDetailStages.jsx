@@ -1,6 +1,11 @@
 import { formatDate } from '../../GenericFunctions/HelperGenericFunctions';
 
-const ApplicationDetailStages = ({ application, refresh, setRefresh }) => {
+const ApplicationDetailStages = ({
+  application,
+  refresh,
+  setRefresh,
+  currentRequirements,
+}) => {
   console.log('Application Detail Stages Rendered', application);
 
   const getTimelineSteps = () => {
@@ -25,6 +30,38 @@ const ApplicationDetailStages = ({ application, refresh, setRefresh }) => {
       application.deceased.last_name.trim() !== '';
 
     const submittedComplete = amountValid && applicantsValid && deceasedValid;
+
+    console.log('CURRENT REQUIREMENTS:', currentRequirements);
+
+    // Check for missing requirements from currentRequirements
+    const missingRequirements = [];
+    if (currentRequirements && Array.isArray(currentRequirements)) {
+      const missingRequirementNames = currentRequirements
+        .filter((req) => !req.is_uploaded)
+        .map((req) => req.document_type?.name)
+        .filter(Boolean); // Remove any undefined/null names
+
+      missingRequirements.push(...missingRequirementNames);
+    }
+
+    // Check for missing template documents
+    const missingTemplateDocuments = [
+      !application.loan_agreement_ready && 'Agreement',
+      !application.undertaking_ready && 'Undertaking',
+    ].filter(Boolean);
+
+    // Combine all missing documents
+    const allMissingDocuments = [
+      ...missingRequirements,
+      ...missingTemplateDocuments,
+    ];
+
+    // Check if all documents are complete (both requirements and templates)
+    const allRequirementsUploaded = currentRequirements
+      ? currentRequirements.every((req) => req.is_uploaded)
+      : true;
+    const allDocumentsComplete =
+      requiredDocsComplete && allRequirementsUploaded;
 
     // Build missing requirements list for submitted stage
     const missingSubmittedRequirements = [];
@@ -71,18 +108,15 @@ const ApplicationDetailStages = ({ application, refresh, setRefresh }) => {
       {
         id: 'documents',
         title: 'Required Documents',
-        description: requiredDocsComplete
+        description: allDocumentsComplete
           ? 'All documents submitted'
-          : `Missing: ${[
-              !application.loan_agreement_ready && 'Agreement',
-              !application.undertaking_ready && 'Undertaking',
-            ]
-              .filter(Boolean)
-              .join(', ')}`,
-        completed: requiredDocsComplete,
-        userAction: !requiredDocsComplete,
+          : allMissingDocuments.length > 0
+          ? `Missing: ${allMissingDocuments.join(', ')}`
+          : 'Documents pending',
+        completed: allDocumentsComplete,
+        userAction: !allDocumentsComplete,
         icon: '📄',
-        actionRequired: !requiredDocsComplete,
+        actionRequired: !allDocumentsComplete,
       },
     ];
   };

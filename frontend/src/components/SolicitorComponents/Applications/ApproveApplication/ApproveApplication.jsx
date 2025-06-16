@@ -19,6 +19,10 @@ const ApproveApplication = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [approvingLoading, setApprovingLoading] = useState(false);
 
+  // Requirements state
+  const [requirementStatus, setRequirementStatus] = useState(null);
+  const [requirements, setRequirements] = useState([]);
+
   const [loanDetails, setLoanDetails] = useState({
     amount_agreed: 0,
     fee_agreed: 0,
@@ -29,6 +33,7 @@ const ApproveApplication = () => {
 
   const navigate = useNavigate();
 
+  // Fetch application data
   useEffect(() => {
     const fetchApplication = async () => {
       if (applicationId) {
@@ -45,6 +50,42 @@ const ApproveApplication = () => {
     fetchApplication();
   }, [token, applicationId]);
 
+  // Fetch requirements data
+  useEffect(() => {
+    const fetchRequirementsData = async () => {
+      if (!token || !applicationId) return;
+
+      const { access } = token;
+
+      try {
+        // Fetch requirement status
+        const statusEndpoint = `/api/applications/${applicationId}/requirement-status/`;
+        const statusResponse = await fetchData(access, statusEndpoint);
+        setRequirementStatus(statusResponse.data);
+
+        // Fetch requirements
+        const requirementsEndpoint = `/api/applications/${applicationId}/document-requirements/`;
+        const requirementsResponse = await fetchData(
+          access,
+          requirementsEndpoint
+        );
+        setRequirements(requirementsResponse.data);
+
+        console.log('Fetched requirement status:', statusResponse.data);
+        console.log('Fetched requirements:', requirementsResponse.data);
+      } catch (error) {
+        console.error('Error fetching requirements data:', error);
+        setRequirementStatus(null);
+        setRequirements([]);
+      }
+    };
+
+    if (applicationId) {
+      fetchRequirementsData();
+    }
+  }, [token, applicationId]);
+
+  // Set loan details when application loads
   useEffect(() => {
     if (application) {
       setLoanDetails({
@@ -57,8 +98,13 @@ const ApproveApplication = () => {
     }
   }, [application]);
 
+  // Calculate fee and check issues
   useEffect(() => {
-    if (loanDetails && (loanDetails.amount_agreed || loanDetails.term_agreed)) {
+    if (
+      loanDetails &&
+      (loanDetails.amount_agreed || loanDetails.term_agreed) &&
+      application
+    ) {
       let yearMultiplier = Math.ceil(loanDetails.term_agreed / 12);
       const calculatedFee =
         Math.round(loanDetails.amount_agreed * 0.15 * yearMultiplier * 100) /
@@ -71,27 +117,106 @@ const ApproveApplication = () => {
         }));
       }
 
+      // Calculate ALL issues here
       const newIssues = [];
-      if (application && !application.loan_agreement_ready) {
-        newIssues.push('Loan agreement is not ready.');
-      }
-      if (application && !application.undertaking_ready) {
-        newIssues.push('Undertaking is not ready.');
-      }
-      if (application && application.signed_documents.length === 0) {
-        newIssues.push('No signed documents available.');
-      }
-      if (calculatedFee > loanDetails.amount_agreed) {
-        newIssues.push(
-          'Check the amounts. 60% of the total value after expenses is bigger than the requested advancement amount.'
+
+      // Only check issues if application is not approved and not rejected
+      if (!application.approved && !application.is_rejected) {
+        // Check missing document requirements
+        let missingCount = 0;
+        if (requirementStatus?.missing_count > 0) {
+          missingCount = requirementStatus.missing_count;
+        } else if (requirements && requirements.length > 0) {
+          const missingRequirements = requirements.filter(
+            (req) => !req.is_uploaded
+          );
+          missingCount = missingRequirements.length;
+        }
+
+        if (missingCount > 0) {
+          newIssues.push(
+            `${missingCount} required document${
+              missingCount > 1 ? 's' : ''
+            } not uploaded.`
+          );
+        }
+
+        // Check for pending signatures in requirements
+        const pendingSignatures = requirements.filter(
+          (req) =>
+            req.is_uploaded &&
+            req.document_type?.signature_required &&
+            req.uploaded_document &&
+            !req.uploaded_document.is_signed
         );
+
+        if (pendingSignatures.length > 0) {
+          newIssues.push(
+            `${pendingSignatures.length} uploaded document${
+              pendingSignatures.length > 1 ? 's' : ''
+            } require${pendingSignatures.length === 1 ? 's' : ''} signature.`
+          );
+        }
+
+        // Check for documents that need signatures but are not signed
+        const unsignedDocs =
+          application.documents?.filter(
+            (doc) => doc.signature_required && !doc.is_signed
+          ) || [];
+
+        if (unsignedDocs.length > 0) {
+          newIssues.push(
+            `${unsignedDocs.length} document${
+              unsignedDocs.length > 1 ? 's' : ''
+            } require${unsignedDocs.length === 1 ? 's' : ''} signature.`
+          );
+        }
+
+        // Check estate value vs amount (if applicable)
+        if (
+          application.value_of_the_estate_after_expenses &&
+          application.amount
+        ) {
+          const maxAllowedAmount =
+            application.value_of_the_estate_after_expenses * 0.6;
+          if (maxAllowedAmount < parseFloat(application.amount)) {
+            newIssues.push(
+              'Check the amounts. 60% of the total value after expenses is less than requested advancement amount.'
+            );
+          }
+        }
+
+        // Check if no documents are uploaded at all
+        const totalDocuments =
+          (application.documents?.length || 0) +
+          (application.signed_documents?.length || 0);
+        const totalRequirements =
+          requirementStatus?.total_requirements || requirements?.length || 0;
+        if (totalDocuments === 0 && totalRequirements === 0) {
+          newIssues.push('No documents uploaded.');
+        }
+
+        // Check fee vs amount
+        if (calculatedFee > loanDetails.amount_agreed) {
+          newIssues.push(
+            'Check the amounts. 60% of the total value after expenses is bigger than the requested advancement amount.'
+          );
+        }
       }
 
-      if (JSON.stringify(newIssues) !== JSON.stringify(issues)) {
+      // Only update issues if they changed
+      if (JSON.stringify(newIssues.sort()) !== JSON.stringify(issues.sort())) {
+        console.log('Issues updated:', newIssues);
         setIssues(newIssues);
       }
     }
-  }, [loanDetails.amount_agreed, loanDetails.term_agreed, application]);
+  }, [
+    loanDetails.amount_agreed,
+    loanDetails.term_agreed,
+    application,
+    requirementStatus,
+    requirements,
+  ]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -195,50 +320,45 @@ const ApproveApplication = () => {
                     </p>
                   </div>
                   <div className='col-lg-4 text-end'>
-                    {issues.length>0 ? (
-                        <div
-                            className='d-flex align-items-center justify-content-end gap-2'
-                            style={{fontSize: '0.875rem'}}
+                    {issues.length > 0 ? (
+                      <div
+                        className='d-flex align-items-center justify-content-end gap-2'
+                        style={{ fontSize: '0.875rem' }}
+                      >
+                        <svg
+                          width='16'
+                          height='16'
+                          fill='#dc2626'
+                          viewBox='0 0 20 20'
                         >
-
-                          <svg
-                              width='16'
-                              height='16'
-                              fill='#dc2626'
-                              viewBox='0 0 20 20'
-                          >
-                            <path
-                                fillRule='evenodd'
-                                d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
-                                clipRule='evenodd'
-                            />
-                          </svg>
-
-                          Not ready for Approval
-                        </div>
+                          <path
+                            fillRule='evenodd'
+                            d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
+                            clipRule='evenodd'
+                          />
+                        </svg>
+                        Not ready for Approval
+                      </div>
                     ) : (
-                        <div
-                            className='d-flex align-items-center justify-content-end gap-2'
-                            style={{fontSize: '0.875rem'}}
+                      <div
+                        className='d-flex align-items-center justify-content-end gap-2'
+                        style={{ fontSize: '0.875rem' }}
+                      >
+                        <svg
+                          width='16'
+                          height='16'
+                          fill='currentColor'
+                          viewBox='0 0 20 20'
                         >
-
-                          <svg
-                              width='16'
-                              height='16'
-                              fill='currentColor'
-                              viewBox='0 0 20 20'
-                          >
-                            <path
-                                fillRule='evenodd'
-                                d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                                clipRule='evenodd'
-                            />
-                          </svg>
-
-                          Ready for Approval
-                        </div>
+                          <path
+                            fillRule='evenodd'
+                            d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                            clipRule='evenodd'
+                          />
+                        </svg>
+                        Ready for Approval
+                      </div>
                     )}
-
                   </div>
                 </div>
               </div>
@@ -248,13 +368,13 @@ const ApproveApplication = () => {
               {/* Main Form */}
               <div className='col-lg-8'>
                 <div
-                    className='bg-white rounded-4 p-4'
-                    style={{
-                      boxShadow:
-                          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                    }}
+                  className='bg-white rounded-4 p-4'
+                  style={{
+                    boxShadow:
+                      '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  }}
                 >
-                  <h5 className='mb-4 fw-bold' style={{color: '#111827'}}>
+                  <h5 className='mb-4 fw-bold' style={{ color: '#111827' }}>
                     Advancement Details
                   </h5>
 
@@ -263,7 +383,7 @@ const ApproveApplication = () => {
                       {/* Amount Agreed */}
                       <div className='col-md-6'>
                         <label
-                            htmlFor='amountAgreed'
+                          htmlFor='amountAgreed'
                           className='form-label fw-semibold mb-2'
                           style={{ color: '#374151', fontSize: '0.875rem' }}
                         >
@@ -547,7 +667,8 @@ const ApproveApplication = () => {
                 <ApplicationSummaryCard
                   application={application}
                   issues={issues}
-                  setIssues={setIssues}
+                  requirementStatus={requirementStatus}
+                  requirements={requirements}
                 />
               </div>
             </div>

@@ -39,6 +39,8 @@ const ApplicationDetails = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
 
+  const [currentRequirements, setCurrentRequirements] = useState([]);
+
   useEffect(() => {
     const fetchApplication = async () => {
       if (token) {
@@ -306,6 +308,7 @@ const ApplicationDetails = () => {
           application={application}
           refresh={refresh}
           setRefresh={setRefresh}
+          currentRequirements={currentRequirements}
         />
 
         {/* Action Cards */}
@@ -463,6 +466,8 @@ const ApplicationDetails = () => {
           refresh={refresh}
           setRefresh={setRefresh}
           user={user}
+          currentRequirements={currentRequirements}
+          setCurrentRequirements={setCurrentRequirements}
         />
 
         {/* Modals and Forms */}
