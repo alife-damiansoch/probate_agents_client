@@ -60,9 +60,9 @@ apiClient.interceptors.request.use((config) => {
   config.headers['Authorization'] = `Bearer ${access}`;
   config.headers['Country'] = country;
 
-  // Add API key header as fallback for incognito/mobile
-  const apiKey = sessionStorage.getItem('frontend_api_key');
-  const userType = sessionStorage.getItem('user_type');
+  // Add API key header from localStorage (persists across tabs)
+  const apiKey = localStorage.getItem('frontend_api_key_agents');
+  const userType = localStorage.getItem('user_type_agents');
 
   if (apiKey) {
     const headerName =
@@ -141,8 +141,8 @@ apiClient.interceptors.response.use(
         error.config.headers['Authorization'] = `Bearer ${access}`;
 
         // Re-add the API key header if it exists
-        const apiKey = sessionStorage.getItem('frontend_api_key');
-        const userType = sessionStorage.getItem('user_type');
+        const apiKey = localStorage.getItem('frontend_api_key_agents');
+        const userType = localStorage.getItem('user_type_agents');
 
         if (apiKey) {
           const headerName =

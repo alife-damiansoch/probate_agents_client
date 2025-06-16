@@ -53,9 +53,9 @@ export const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       Cookies.remove('auth_token_agents'); // Clear the token from cookies
-      // Clear sessionStorage items
-      sessionStorage.removeItem('frontend_api_key');
-      sessionStorage.removeItem('user_type');
+      // Clear localStorage items
+      localStorage.removeItem('frontend_api_key_agents');
+      localStorage.removeItem('user_type_agents');
     },
     loginSuccess: (state, action) => {
       state.token = action.payload.tokenObj;
@@ -71,10 +71,10 @@ export const authSlice = createSlice({
         path: '/',
       });
 
-      // Store API key and user type in sessionStorage as fallback
+      // Store API key and user type in localStorage (persists across tabs)
       if (api_key) {
-        sessionStorage.setItem('frontend_api_key', api_key);
-        sessionStorage.setItem('user_type', user_type || 'regular');
+        localStorage.setItem('frontend_api_key_agents', api_key);
+        localStorage.setItem('user_type_agents', user_type || 'staff');
       }
     },
     setNewTokens: (state, action) => {
@@ -110,10 +110,10 @@ export const authSlice = createSlice({
           path: '/',
         });
 
-        // Store API key and user type in sessionStorage as fallback
+        // Store API key and user type in localStorage (persists across tabs)
         if (api_key) {
-          sessionStorage.setItem('frontend_api_key', api_key);
-          sessionStorage.setItem('user_type', user_type || 'regular');
+          localStorage.setItem('frontend_api_key_agents', api_key);
+          localStorage.setItem('user_type_agents', user_type || 'staff');
         }
 
         state.token = action.payload;
