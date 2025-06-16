@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import BackToApplicationsIcon from '../../GenericComponents/BackToApplicationsIcon';
 import DeleteApplication from './DeleteApplication';
-import DocumentsUpload from './DocumentsUpload';
+import DocumentsUpload from './UploadingFileComponents/DocumentsUpload.jsx';
 
 import Cookies from 'js-cookie';
 import { useSelector } from 'react-redux';

@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 
 const ConfirmModal = ({ isOpen, document, onConfirm, onCancel }) => {
   const [typedName, setTypedName] = useState('');
@@ -10,27 +10,27 @@ const ConfirmModal = ({ isOpen, document, onConfirm, onCancel }) => {
   };
 
   const overlayStyle = {
-    position: 'absolute',
+    position: 'fixed', // Changed from 'absolute'
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000, // Ensure the overlay is on top of everything
+    zIndex: 1000,
   };
 
   const modalStyle = {
-    position: 'absolute',
     backgroundColor: '#ffffff',
     padding: '20px',
     borderRadius: '8px',
     boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.2)',
     minWidth: '300px',
     maxWidth: '500px',
-    zIndex: 1001, // Ensure the modal itself is above the overlay
+    width: '90%',
+    zIndex: 1001,
   };
 
   const inputStyle = {
@@ -52,18 +52,20 @@ const ConfirmModal = ({ isOpen, document, onConfirm, onCancel }) => {
       <div style={modalStyle}>
         <h4 className='text-center mb-3'>Confirm Delete</h4>
 
-        <p className=' text-center'>
+        <p className='text-center'>
           Please type the document name to confirm deletion of this document.
           <br />
           <br />
           <strong className='text-danger'>{document.original_name}</strong>
         </p>
+
         {document.is_signed && (
           <p className='alert alert-warning text-danger text-center'>
             <strong>Warning:</strong> <br /> This document is signed. Deleting
             it will remove all associated signatures.
           </p>
         )}
+
         <input
           type='text'
           value={typedName}
@@ -71,13 +73,14 @@ const ConfirmModal = ({ isOpen, document, onConfirm, onCancel }) => {
           placeholder='Type document name here...'
           style={inputStyle}
         />
+
         <div style={buttonContainerStyle}>
           <button onClick={() => onCancel(false)} className='btn btn-secondary'>
             Cancel
           </button>
           <button
             onClick={() => onConfirm(true)}
-            disabled={typedName !== document.original_name} // Enable only when names match
+            disabled={typedName !== document.original_name}
             className='btn btn-danger'
           >
             Delete

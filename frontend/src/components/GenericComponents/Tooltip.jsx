@@ -10,14 +10,14 @@ const Tooltip = ({ content, visible }) => {
 
   const tooltipStyle = {
     position: 'absolute',
-    top: '0px',
+    bottom: '0px',
     left: '0px',
     padding: '8px',
     backgroundColor: '#ffffff',
     border: '1px solid #ccc',
     borderRadius: '4px',
     boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-    zIndex: 1000,
+    zIndex: 10000,
     width: '300px',
     fontSize: '12px',
     overflowWrap: 'break-word',
