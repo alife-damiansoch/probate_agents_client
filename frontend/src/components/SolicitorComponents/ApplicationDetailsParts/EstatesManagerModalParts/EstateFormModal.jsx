@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { estateFieldMap } from './estateFieldConfig';
+import { estateFieldMap, getCountyOptions } from './estateFieldConfig';
 
 const EstateFormModal = ({
   show,
@@ -9,6 +9,7 @@ const EstateFormModal = ({
   initialData,
   currency_sign = '€',
   isAdmin = false,
+  application,
 }) => {
   const [formData, setFormData] = useState({});
 
@@ -18,14 +19,35 @@ const EstateFormModal = ({
     if (initialData) {
       setFormData(initialData);
     } else {
+      // Get the proper field configuration based on user country
+      const fieldConfig = getEstateFieldConfig(
+        estateType,
+        application?.user?.country || 'IE'
+      );
       const emptyFields =
-        estateFieldMap[estateType]?.reduce((acc, f) => {
+        fieldConfig?.reduce((acc, f) => {
           acc[f.name] = '';
           return acc;
         }, {}) || {};
       setFormData(emptyFields);
     }
-  }, [initialData, estateType]);
+  }, [initialData, estateType, application?.user?.country]);
+
+  // Function to get field configuration with proper country-based options
+  const getEstateFieldConfig = (estateType, userCountry) => {
+    const baseConfig = estateFieldMap[estateType] || [];
+
+    // Replace county options based on user country
+    return baseConfig.map((field) => {
+      if (field.name === 'county') {
+        return {
+          ...field,
+          options: getCountyOptions(userCountry),
+        };
+      }
+      return field;
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -253,6 +275,12 @@ const EstateFormModal = ({
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
+  // Get the field configuration with proper country-based options
+  const fieldConfig = getEstateFieldConfig(
+    estateType,
+    application?.user?.country || 'IE'
+  );
+
   return (
     <div
       style={{
@@ -326,7 +354,7 @@ const EstateFormModal = ({
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
         >
-          {estateFieldMap[estateType]?.map((field) => {
+          {fieldConfig?.map((field) => {
             if (!shouldShowField(field)) return null;
 
             return (

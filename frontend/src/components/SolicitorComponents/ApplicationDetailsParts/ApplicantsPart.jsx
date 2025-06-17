@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import Cookies from 'js-cookie';
+import { useEffect, useState } from 'react';
 import LoadingComponent from '../../GenericComponents/LoadingComponent';
+import { getCountyOptions } from '../ApplicationDetailsParts/EstatesManagerModalParts/estateFieldConfig';
 
 const ApplicantsPart = ({
   addItem,
@@ -18,7 +20,17 @@ const ApplicantsPart = ({
     first_name: '',
     last_name: '',
     pps_number: '',
+    address_line_1: '',
+    address_line_2: '',
+    city: '',
+    county: '',
+    postal_code: '',
+    country: 'Ireland',
+    date_of_birth: '',
+    email: '',
+    phone_number: '',
   });
+
   const [showAddForm, setShowAddForm] = useState(false);
 
   const TITLE_CHOICES = [
@@ -29,707 +41,994 @@ const ApplicantsPart = ({
     { value: 'Prof', label: 'Prof' },
   ];
 
+  const idNumberArray = JSON.parse(Cookies.get('id_number') || '["PPS"]');
+
+  const getCountyOptionsForUser = () => {
+    const userCountry = application?.user?.country;
+    return getCountyOptions(userCountry);
+  };
+
+  const requiredFields = [
+    'title',
+    'first_name',
+    'last_name',
+    'pps_number',
+    'address_line_1',
+    'city',
+    'county',
+    'postal_code',
+    'date_of_birth',
+    'email',
+    'phone_number',
+    'country',
+  ];
+
+  const isFormValid = requiredFields.every(
+    (field) =>
+      newApplicant[field] && newApplicant[field].toString().trim() !== ''
+  );
+
   const handleNewApplicantChange = (e, field) => {
-    const value = e.target.value;
-    setNewApplicant({
-      ...newApplicant,
-      [field]: value,
-    });
+    setNewApplicant({ ...newApplicant, [field]: e.target.value });
   };
 
   const addApplicant = () => {
     addItem('applicants', newApplicant);
+    resetForm();
+    setTriggerChandleChange(!triggerHandleChange);
+    setShowAddForm(false);
+  };
+
+  const resetForm = () => {
     setNewApplicant({
       title: '',
       first_name: '',
       last_name: '',
       pps_number: '',
+      address_line_1: '',
+      address_line_2: '',
+      city: '',
+      county: '',
+      postal_code: '',
+      country: 'Ireland',
+      date_of_birth: '',
+      email: '',
+      phone_number: '',
     });
-    setTriggerChandleChange(!triggerHandleChange);
-    setShowAddForm(false); // Hide form after adding
   };
 
-  const isAnyFieldFilled = Object.values(newApplicant).some(
-    (value) => value !== ''
-  );
-
-  // Validate forms
-  const isApplicantFormValid =
-    newApplicant.title &&
-    newApplicant.first_name &&
-    newApplicant.last_name &&
-    newApplicant.pps_number;
-
-  const getFieldClassName = (field) => {
-    return `form-control border-0 rounded-3 py-2 px-3 ${
-      !newApplicant[field] && isAnyFieldFilled ? 'border-1 border-danger' : ''
-    }`;
-  };
-
-  const getEditIcon = (field) => {
+  const getEditButton = (field) => {
     const isEditing = editMode[field];
     const isDisabled =
       application.approved || application.is_rejected || !isAdmin;
 
     if (isDisabled) {
       return (
-        <svg width='16' height='16' fill='#9ca3af' viewBox='0 0 20 20'>
-          <path
-            fillRule='evenodd'
-            d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
-            clipRule='evenodd'
-          />
-        </svg>
+        <div
+          className='d-flex align-items-center justify-content-center'
+          style={{
+            width: '32px',
+            height: '24px',
+            background: 'linear-gradient(145deg, #f1f5f9, #e2e8f0)',
+            borderRadius: '8px',
+            border: '1px solid #cbd5e1',
+            boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)',
+            cursor: 'not-allowed',
+          }}
+        >
+          <span style={{ fontSize: '0.7rem' }}>🔒</span>
+        </div>
       );
     }
 
     if (isEditing) {
       return (
-        <svg width='16' height='16' fill='#059669' viewBox='0 0 20 20'>
-          <path
-            fillRule='evenodd'
-            d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
-            clipRule='evenodd'
-          />
-        </svg>
+        <div
+          className='d-flex align-items-center justify-content-center'
+          style={{
+            width: '32px',
+            height: '24px',
+            background: 'linear-gradient(145deg, #10b981, #059669)',
+            borderRadius: '8px',
+            border: '1px solid #047857',
+            boxShadow:
+              '0 2px 8px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow =
+              '0 4px 12px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow =
+              '0 2px 8px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
+          }}
+        >
+          <span
+            style={{ fontSize: '0.7rem', color: 'white', fontWeight: 'bold' }}
+          >
+            💾
+          </span>
+        </div>
       );
     }
 
     return (
-      <svg width='16' height='16' fill='#6b7280' viewBox='0 0 20 20'>
-        <path d='M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z' />
-      </svg>
+      <div
+        className='d-flex align-items-center justify-content-center'
+        style={{
+          width: '32px',
+          height: '24px',
+          background: 'linear-gradient(145deg, #3b82f6, #2563eb)',
+          borderRadius: '8px',
+          border: '1px solid #1d4ed8',
+          boxShadow:
+            '0 2px 8px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow =
+            '0 4px 12px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow =
+            '0 2px 8px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
+        }}
+      >
+        <span
+          style={{ fontSize: '0.7rem', color: 'white', fontWeight: 'bold' }}
+        >
+          ✎
+        </span>
+      </div>
     );
   };
 
-  return (
-    <>
-      {application ? (
-        <div className='mb-5'>
-          {/* Header */}
-          <div
-            className='px-4 py-4 mb-4 rounded-3'
+  const validateField = (applicant, field) => {
+    if (requiredFields.includes(field)) {
+      return applicant[field] && applicant[field].toString().trim() !== '';
+    }
+    return true;
+  };
+
+  // Fixed EditableField with local state to prevent re-renders
+  const EditableField = ({
+    applicant,
+    index,
+    field,
+    label,
+    type = 'text',
+    options = null,
+    cols = 4,
+  }) => {
+    const [localValue, setLocalValue] = useState(applicant[field] || '');
+    const editKey = `applicant_${index}_${field}`;
+    const isEditing = editMode[editKey];
+    const fieldOptions =
+      field === 'county' ? getCountyOptionsForUser() : options;
+
+    // Update local value when applicant data changes from outside
+    useEffect(() => {
+      setLocalValue(applicant[field] || '');
+    }, [applicant[field]]);
+
+    // Handle field changes with local state only
+    const handleFieldChange = (e) => {
+      setLocalValue(e.target.value); // Only update local state
+    };
+
+    // Handle save button click
+    const handleSaveClick = () => {
+      const isFieldValid = requiredFields.includes(field)
+        ? localValue && localValue.toString().trim() !== ''
+        : true;
+
+      if (isEditing && !isFieldValid) {
+        alert(`${label} is required`);
+        return;
+      }
+
+      if (isEditing) {
+        // Now update parent state and save
+        const fakeEvent = { target: { value: localValue } };
+        handleListChange(fakeEvent, index, 'applicants', field);
+        submitChangesHandler();
+      }
+      toggleEditMode(editKey);
+    };
+
+    // Use localValue when editing, applicant[field] when not editing
+    const displayValue = isEditing ? localValue : applicant[field] || '';
+
+    return (
+      <div className={`col-md-${cols}`} style={{ marginBottom: '1rem' }}>
+        <div
+          className='position-relative'
+          style={{
+            background: isEditing
+              ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)'
+              : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+            borderRadius: '12px',
+            border:
+              isEditing && !validateField({ [field]: localValue }, field)
+                ? '2px solid #ef4444'
+                : isEditing
+                ? '2px solid #3b82f6'
+                : '1px solid #e2e8f0',
+            transition: 'all 0.3s ease',
+            height: '42px',
+            overflow: 'hidden',
+            boxShadow: isEditing
+              ? '0 4px 12px rgba(59, 130, 246, 0.15)'
+              : '0 1px 3px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <label
+            className='position-absolute'
             style={{
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              color: 'white',
+              top: '4px',
+              left: '12px',
+              fontSize: '0.7rem',
+              color: isEditing ? '#3b82f6' : '#6b7280',
+              fontWeight: '600',
+              lineHeight: '1',
+              zIndex: 2,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
             }}
           >
-            <div className='row align-items-center'>
-              <div className='col-lg-8'>
-                <h6 className='mb-0 fw-bold d-flex align-items-center gap-2'>
-                  <svg
-                    width='20'
-                    height='20'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                  Applicants ({application.applicants.length})
-                </h6>
+            {label}
+          </label>
+
+          {fieldOptions ? (
+            <select
+              className='form-control border-0'
+              style={{
+                background: 'transparent',
+                fontSize: '0.85rem',
+                padding: '16px 50px 6px 12px',
+                height: '42px',
+                appearance: 'none',
+                cursor: isEditing ? 'pointer' : 'default',
+                fontWeight: '500',
+              }}
+              value={displayValue}
+              onChange={handleFieldChange}
+              disabled={!isEditing}
+            >
+              {fieldOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={type}
+              className='form-control border-0'
+              style={{
+                background: 'transparent',
+                fontSize: '0.85rem',
+                padding: '16px 50px 6px 12px',
+                height: '42px',
+                cursor: isEditing ? 'text' : 'default',
+                fontWeight: '500',
+              }}
+              value={displayValue}
+              onChange={handleFieldChange}
+              readOnly={!isEditing}
+            />
+          )}
+
+          <button
+            type='button'
+            className='position-absolute'
+            style={{
+              top: '50%',
+              right: '8px',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              transition: 'all 0.2s ease',
+            }}
+            onClick={handleSaveClick}
+            disabled={
+              application.approved || application.is_rejected || !isAdmin
+            }
+          >
+            {getEditButton(editKey)}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Enhanced form field with better visibility
+  const FormField = ({
+    field,
+    label,
+    type = 'text',
+    cols = 4,
+    options = null,
+  }) => {
+    const isRequired = requiredFields.includes(field);
+    const hasError = !newApplicant[field] && isRequired;
+    const hasValue = Object.values(newApplicant).some((val) => val !== '');
+    const fieldOptions =
+      field === 'county' ? getCountyOptionsForUser() : options;
+
+    return (
+      <div className={`col-md-${cols}`} style={{ marginBottom: '1rem' }}>
+        <div
+          className='position-relative'
+          style={{
+            background:
+              hasError && hasValue
+                ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'
+                : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+            borderRadius: '12px',
+            border:
+              hasError && hasValue ? '2px solid #ef4444' : '1px solid #e2e8f0',
+            height: '42px',
+            overflow: 'hidden',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <label
+            className='position-absolute'
+            style={{
+              top: '4px',
+              left: '12px',
+              fontSize: '0.7rem',
+              color: hasError && hasValue ? '#ef4444' : '#6b7280',
+              fontWeight: '600',
+              lineHeight: '1',
+              zIndex: 2,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+          >
+            {label} {isRequired && <span style={{ color: '#ef4444' }}>*</span>}
+          </label>
+
+          {fieldOptions ? (
+            <select
+              className='form-control border-0'
+              style={{
+                background: 'transparent',
+                fontSize: '0.85rem',
+                padding: '16px 12px 6px 12px',
+                height: '42px',
+                appearance: 'none',
+                fontWeight: '500',
+              }}
+              value={newApplicant[field]}
+              onChange={(e) => handleNewApplicantChange(e, field)}
+              onFocus={(e) => {
+                e.target.parentElement.style.borderColor = '#3b82f6';
+                e.target.parentElement.style.boxShadow =
+                  '0 4px 12px rgba(59, 130, 246, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.target.parentElement.style.borderColor = '#e2e8f0';
+                e.target.parentElement.style.boxShadow =
+                  '0 1px 3px rgba(0, 0, 0, 0.1)';
+              }}
+            >
+              {fieldOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={type}
+              className='form-control border-0'
+              style={{
+                background: 'transparent',
+                fontSize: '0.85rem',
+                padding: '16px 12px 6px 12px',
+                height: '42px',
+                fontWeight: '500',
+              }}
+              value={newApplicant[field]}
+              onChange={(e) => handleNewApplicantChange(e, field)}
+              placeholder=' '
+              onFocus={(e) => {
+                e.target.parentElement.style.borderColor = '#3b82f6';
+                e.target.parentElement.style.boxShadow =
+                  '0 4px 12px rgba(59, 130, 246, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.target.parentElement.style.borderColor = '#e2e8f0';
+                e.target.parentElement.style.boxShadow =
+                  '0 1px 3px rgba(0, 0, 0, 0.1)';
+              }}
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  if (!application) return <LoadingComponent />;
+
+  const hasApplicant = application.applicants?.length > 0;
+
+  return (
+    <div
+      className='mt-3'
+      style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        overflow: 'hidden',
+        boxShadow:
+          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      }}
+    >
+      {/* Enhanced header */}
+      <div
+        className='d-flex align-items-center justify-content-between px-4 py-3'
+        style={{
+          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
+        <div className='d-flex align-items-center'>
+          <div
+            className='me-3'
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+            }}
+          >
+            <svg width='16' height='16' fill='white' viewBox='0 0 20 20'>
+              <path
+                fillRule='evenodd'
+                d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
+                clipRule='evenodd'
+              />
+            </svg>
+          </div>
+          <div>
+            <h6
+              className='mb-0'
+              style={{ fontSize: '1rem', color: 'white', fontWeight: '700' }}
+            >
+              Applicant Information
+            </h6>
+            <small
+              style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}
+            >
+              Single applicant required
+            </small>
+          </div>
+        </div>
+        <div
+          className='px-3 py-2'
+          style={{
+            background: hasApplicant
+              ? 'linear-gradient(135deg, #10b981, #059669)'
+              : 'linear-gradient(135deg, #ef4444, #dc2626)',
+            color: 'white',
+            borderRadius: '8px',
+            fontSize: '0.75rem',
+            fontWeight: '700',
+            boxShadow: hasApplicant
+              ? '0 2px 8px rgba(16, 185, 129, 0.3)'
+              : '0 2px 8px rgba(239, 68, 68, 0.3)',
+          }}
+        >
+          {hasApplicant ? '✓ Complete' : '⚠ Required'}
+        </div>
+      </div>
+
+      <div className='p-4'>
+        {/* Warning */}
+        {!hasApplicant && (
+          <div
+            className='text-center mb-3 py-3'
+            style={{
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              borderRadius: '10px',
+              fontSize: '0.9rem',
+              color: '#92400e',
+              fontWeight: '600',
+              border: '1px solid #f59e0b',
+            }}
+          >
+            ⚠️ Applicant information is required to proceed
+          </div>
+        )}
+
+        {/* Existing Applicant */}
+        {application.applicants?.map((applicant, index) => (
+          <div key={applicant.id || index}>
+            {/* Basic Info Section */}
+            <div
+              className='mb-4 p-4'
+              style={{
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <div
+                className='mb-3'
+                style={{
+                  fontSize: '0.8rem',
+                  color: '#3b82f6',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                }}
+              >
+                👤 Personal Details
               </div>
-              <div className='col-lg-4 text-end'>
-                {!application.approved &&
-                  !application.is_rejected &&
-                  isAdmin && (
-                    <button
-                      className='btn px-4 py-2 fw-semibold rounded-3 d-inline-flex align-items-center gap-2'
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        color: 'white',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        fontSize: '0.875rem',
-                      }}
-                      onClick={() => setShowAddForm(!showAddForm)}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = 'rgba(255, 255, 255, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                      }}
-                    >
-                      <svg
-                        width='16'
-                        height='16'
-                        fill='currentColor'
-                        viewBox='0 0 20 20'
-                      >
-                        <path
-                          fillRule='evenodd'
-                          d='M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z'
-                          clipRule='evenodd'
-                        />
-                      </svg>
-                      {showAddForm ? 'Cancel' : 'Add Applicant'}
-                    </button>
-                  )}
+              <div className='row g-3'>
+                <EditableField
+                  applicant={applicant}
+                  index={index}
+                  field='title'
+                  label='Title'
+                  options={TITLE_CHOICES}
+                  cols={3}
+                />
+                <EditableField
+                  applicant={applicant}
+                  index={index}
+                  field='first_name'
+                  label='First Name'
+                  cols={3}
+                />
+                <EditableField
+                  applicant={applicant}
+                  index={index}
+                  field='last_name'
+                  label='Last Name'
+                  cols={3}
+                />
+                <EditableField
+                  applicant={applicant}
+                  index={index}
+                  field='pps_number'
+                  label={idNumberArray[0]}
+                  cols={3}
+                />
+                <EditableField
+                  applicant={applicant}
+                  index={index}
+                  field='date_of_birth'
+                  label='Date of Birth'
+                  type='date'
+                  cols={6}
+                />
+              </div>
+            </div>
+
+            {/* Contact & Address Sections */}
+            <div className='row g-3'>
+              <div className='col-md-6'>
+                <div
+                  className='p-4'
+                  style={{
+                    background:
+                      'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                    borderRadius: '12px',
+                    border: '1px solid #bbf7d0',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                  }}
+                >
+                  <div
+                    className='mb-3'
+                    style={{
+                      fontSize: '0.8rem',
+                      color: '#059669',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                    }}
+                  >
+                    📞 Contact Information
+                  </div>
+                  <div className='row g-3'>
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='email'
+                      label='Email Address'
+                      type='email'
+                      cols={12}
+                    />
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='phone_number'
+                      label='Phone Number'
+                      type='tel'
+                      cols={12}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className='col-md-6'>
+                <div
+                  className='p-4'
+                  style={{
+                    background:
+                      'linear-gradient(135deg, #fef7ff 0%, #fae8ff 100%)',
+                    borderRadius: '12px',
+                    border: '1px solid #e9d5ff',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                  }}
+                >
+                  <div
+                    className='mb-3'
+                    style={{
+                      fontSize: '0.8rem',
+                      color: '#7c3aed',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                    }}
+                  >
+                    🏠 Address Details
+                  </div>
+                  <div className='row g-3'>
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='address_line_1'
+                      label='Address Line 1'
+                      cols={12}
+                    />
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='address_line_2'
+                      label='Address Line 2'
+                      cols={12}
+                    />
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='city'
+                      label='City'
+                      cols={6}
+                    />
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='county'
+                      label='County'
+                      cols={6}
+                    />
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='postal_code'
+                      label='Postal Code'
+                      cols={6}
+                    />
+                    <EditableField
+                      applicant={applicant}
+                      index={index}
+                      field='country'
+                      label='Country'
+                      cols={6}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+        ))}
 
-          {/* Applicants List */}
-          {application.applicants.length === 0 ? (
-            <div
-              className='text-center p-5 rounded-3 mb-4'
-              style={{
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <svg
-                width='48'
-                height='48'
-                fill='#9ca3af'
-                viewBox='0 0 20 20'
-                className='mx-auto mb-3'
-              >
-                <path
-                  fillRule='evenodd'
-                  d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
-                  clipRule='evenodd'
-                />
-              </svg>
-              <h6 className='fw-bold mb-2' style={{ color: '#6b7280' }}>
-                No Applicants Found
-              </h6>
-              <p
-                className='mb-0'
-                style={{ color: '#9ca3af', fontSize: '0.875rem' }}
-              >
-                No applicants have been added to this application yet.
-              </p>
-            </div>
-          ) : (
-            <div className='mb-4'>
-              {application.applicants.map((applicant, index) => (
+        {/* Add Form and remaining components stay the same */}
+        {!hasApplicant &&
+          !application.approved &&
+          !application.is_rejected &&
+          isAdmin && (
+            <>
+              {showAddForm ? (
                 <div
-                  key={index}
-                  className='p-3 rounded-3 mb-3'
+                  className='p-4'
                   style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    background:
+                      'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                    borderRadius: '12px',
+                    border: '2px solid #3b82f6',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)',
                   }}
                 >
-                  {/* Applicant Header */}
-                  <div className='d-flex align-items-center justify-content-between mb-3'>
-                    <div className='d-flex align-items-center gap-3'>
+                  <div className='d-flex justify-content-between align-items-center mb-4'>
+                    <span
+                      style={{
+                        fontSize: '1rem',
+                        color: '#3b82f6',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                      }}
+                    >
+                      ➕ Add New Applicant
+                    </span>
+                    <button
+                      className='btn'
+                      style={{
+                        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                        color: 'white',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '0.8rem',
+                        padding: '6px 12px',
+                        fontWeight: '600',
+                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+                      }}
+                      onClick={() => {
+                        setShowAddForm(false);
+                        resetForm();
+                      }}
+                    >
+                      ✕ Cancel
+                    </button>
+                  </div>
+
+                  {!isFormValid &&
+                    Object.values(newApplicant).some((val) => val !== '') && (
                       <div
-                        className='d-flex align-items-center justify-content-center rounded-2'
+                        className='text-center mb-3 py-2'
                         style={{
-                          width: '40px',
-                          height: '40px',
-                          backgroundColor: '#10b981',
-                          color: 'white',
+                          background:
+                            'linear-gradient(135deg, #dbeafe, #bfdbfe)',
+                          color: '#1d4ed8',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: '600',
+                          border: '1px solid #3b82f6',
                         }}
                       >
-                        <svg
-                          width='20'
-                          height='20'
-                          fill='currentColor'
-                          viewBox='0 0 20 20'
-                        >
-                          <path
-                            fillRule='evenodd'
-                            d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
-                            clipRule='evenodd'
-                          />
-                        </svg>
+                        ℹ️ Please complete all required fields marked with *
                       </div>
-                      <div>
-                        <h6
-                          className='mb-1 fw-bold'
-                          style={{ color: '#111827', fontSize: '1rem' }}
-                        >
-                          {applicant.title} {applicant.first_name}{' '}
-                          {applicant.last_name}
-                        </h6>
-                        <span
-                          className='badge px-2 py-1 rounded-pill'
-                          style={{
-                            backgroundColor: '#d1fae5',
-                            color: '#065f46',
-                            fontSize: '0.75rem',
-                          }}
-                        >
-                          Applicant #{index + 1}
-                        </span>
-                      </div>
-                    </div>
-                    {!application.approved &&
-                      !application.is_rejected &&
-                      isAdmin && (
-                        <button
-                          type='button'
-                          className='btn btn-sm p-2 rounded-2'
-                          style={{
-                            background: '#fef2f2',
-                            border: '1px solid #fecaca',
-                            color: '#dc2626',
-                          }}
-                          onClick={() => removeItem('applicants', index)}
-                          onMouseEnter={(e) => {
-                            e.target.style.background = '#fee2e2';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.background = '#fef2f2';
-                          }}
-                        >
-                          <svg
-                            width='16'
-                            height='16'
-                            fill='currentColor'
-                            viewBox='0 0 20 20'
-                          >
-                            <path
-                              fillRule='evenodd'
-                              d='M9 2a1 1 0 000 2h2a1 1 0 100-2H9z'
-                              clipRule='evenodd'
-                            />
-                            <path
-                              fillRule='evenodd'
-                              d='M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V7a1 1 0 00-1-1z'
-                              clipRule='evenodd'
-                            />
-                          </svg>
-                        </button>
-                      )}
-                  </div>
+                    )}
 
-                  {/* Applicant Fields - Condensed Row Layout */}
-                  <div className='row g-3'>
-                    {/* Title Field */}
-                    <div className='col-md-3'>
-                      <div className='position-relative'>
-                        <label
-                          className='form-label fw-semibold mb-1'
-                          style={{ color: '#374151', fontSize: '0.75rem' }}
-                        >
-                          TITLE
-                        </label>
-                        <select
-                          className='form-control border-0 rounded-2 py-2 px-3'
-                          style={{
-                            backgroundColor: editMode[
-                              `applicant_${index}_title`
-                            ]
-                              ? '#fef3c7'
-                              : '#ffffff',
-                            fontSize: '0.875rem',
-                            cursor: editMode[`applicant_${index}_title`]
-                              ? 'pointer'
-                              : 'not-allowed',
-                          }}
-                          value={applicant.title}
-                          onChange={(e) =>
-                            handleListChange(e, index, 'applicants', 'title')
-                          }
-                          disabled={!editMode[`applicant_${index}_title`]}
-                        >
-                          {TITLE_CHOICES.map((choice) => (
-                            <option key={choice.value} value={choice.value}>
-                              {choice.label}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type='button'
-                          className='position-absolute top-50 end-0 translate-middle-y me-2 btn btn-sm p-1 rounded-1'
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            zIndex: 10,
-                            marginTop: '10px',
-                          }}
-                          onClick={() => {
-                            if (editMode[`applicant_${index}_title`])
-                              submitChangesHandler();
-                            toggleEditMode(`applicant_${index}_title`);
-                          }}
-                          disabled={
-                            application.approved ||
-                            application.is_rejected ||
-                            !isAdmin
-                          }
-                        >
-                          {getEditIcon(`applicant_${index}_title`)}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* First Name Field */}
-                    <div className='col-md-3'>
-                      <div className='position-relative'>
-                        <label
-                          className='form-label fw-semibold mb-1'
-                          style={{ color: '#374151', fontSize: '0.75rem' }}
-                        >
-                          FIRST NAME
-                        </label>
-                        <input
-                          type='text'
-                          className='form-control border-0 rounded-2 py-2 px-3'
-                          style={{
-                            backgroundColor: editMode[
-                              `applicant_${index}_first_name`
-                            ]
-                              ? '#fef3c7'
-                              : '#ffffff',
-                            fontSize: '0.875rem',
-                            cursor: editMode[`applicant_${index}_first_name`]
-                              ? 'text'
-                              : 'not-allowed',
-                            paddingRight: '40px',
-                          }}
-                          value={applicant.first_name}
-                          onChange={(e) =>
-                            handleListChange(
-                              e,
-                              index,
-                              'applicants',
-                              'first_name'
-                            )
-                          }
-                          readOnly={!editMode[`applicant_${index}_first_name`]}
-                        />
-                        <button
-                          type='button'
-                          className='position-absolute top-50 end-0 translate-middle-y me-2 btn btn-sm p-1 rounded-1'
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            zIndex: 10,
-                            marginTop: '10px',
-                          }}
-                          onClick={() => {
-                            if (editMode[`applicant_${index}_first_name`])
-                              submitChangesHandler();
-                            toggleEditMode(`applicant_${index}_first_name`);
-                          }}
-                          disabled={
-                            application.approved ||
-                            application.is_rejected ||
-                            !isAdmin
-                          }
-                        >
-                          {getEditIcon(`applicant_${index}_first_name`)}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Last Name Field */}
-                    <div className='col-md-3'>
-                      <div className='position-relative'>
-                        <label
-                          className='form-label fw-semibold mb-1'
-                          style={{ color: '#374151', fontSize: '0.75rem' }}
-                        >
-                          LAST NAME
-                        </label>
-                        <input
-                          type='text'
-                          className='form-control border-0 rounded-2 py-2 px-3'
-                          style={{
-                            backgroundColor: editMode[
-                              `applicant_${index}_last_name`
-                            ]
-                              ? '#fef3c7'
-                              : '#ffffff',
-                            fontSize: '0.875rem',
-                            cursor: editMode[`applicant_${index}_last_name`]
-                              ? 'text'
-                              : 'not-allowed',
-                            paddingRight: '40px',
-                          }}
-                          value={applicant.last_name}
-                          onChange={(e) =>
-                            handleListChange(
-                              e,
-                              index,
-                              'applicants',
-                              'last_name'
-                            )
-                          }
-                          readOnly={!editMode[`applicant_${index}_last_name`]}
-                        />
-                        <button
-                          type='button'
-                          className='position-absolute top-50 end-0 translate-middle-y me-2 btn btn-sm p-1 rounded-1'
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            zIndex: 10,
-                            marginTop: '10px',
-                          }}
-                          onClick={() => {
-                            if (editMode[`applicant_${index}_last_name`])
-                              submitChangesHandler();
-                            toggleEditMode(`applicant_${index}_last_name`);
-                          }}
-                          disabled={
-                            application.approved ||
-                            application.is_rejected ||
-                            !isAdmin
-                          }
-                        >
-                          {getEditIcon(`applicant_${index}_last_name`)}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* PPS Number Field */}
-                    <div className='col-md-3'>
-                      <div className='position-relative'>
-                        <label
-                          className='form-label fw-semibold mb-1'
-                          style={{ color: '#374151', fontSize: '0.75rem' }}
-                        >
-                          PPS NUMBER
-                        </label>
-                        <input
-                          type='text'
-                          className='form-control border-0 rounded-2 py-2 px-3'
-                          style={{
-                            backgroundColor: editMode[
-                              `applicant_${index}_pps_number`
-                            ]
-                              ? '#fef3c7'
-                              : '#ffffff',
-                            fontSize: '0.875rem',
-                            cursor: editMode[`applicant_${index}_pps_number`]
-                              ? 'text'
-                              : 'not-allowed',
-                            paddingRight: '40px',
-                          }}
-                          value={applicant.pps_number}
-                          onChange={(e) =>
-                            handleListChange(
-                              e,
-                              index,
-                              'applicants',
-                              'pps_number'
-                            )
-                          }
-                          readOnly={!editMode[`applicant_${index}_pps_number`]}
-                        />
-                        <button
-                          type='button'
-                          className='position-absolute top-50 end-0 translate-middle-y me-2 btn btn-sm p-1 rounded-1'
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            zIndex: 10,
-                            marginTop: '10px',
-                          }}
-                          onClick={() => {
-                            if (editMode[`applicant_${index}_pps_number`])
-                              submitChangesHandler();
-                            toggleEditMode(`applicant_${index}_pps_number`);
-                          }}
-                          disabled={
-                            application.approved ||
-                            application.is_rejected ||
-                            !isAdmin
-                          }
-                        >
-                          {getEditIcon(`applicant_${index}_pps_number`)}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add New Applicant Form */}
-          {showAddForm &&
-            !application.approved &&
-            !application.is_rejected &&
-            isAdmin && (
-              <div
-                className='p-4 rounded-3'
-                style={{
-                  backgroundColor: '#fefbf3',
-                  border: '1px solid #fed7aa',
-                }}
-              >
-                <div className='d-flex align-items-center justify-content-between mb-4'>
-                  <div className='d-flex align-items-center gap-2'>
-                    <svg
-                      width='20'
-                      height='20'
-                      fill='#d97706'
-                      viewBox='0 0 20 20'
+                  {/* Personal Details */}
+                  <div className='mb-4'>
+                    <div
+                      className='mb-3'
+                      style={{
+                        fontSize: '0.8rem',
+                        color: '#3b82f6',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                      }}
                     >
-                      <path
-                        fillRule='evenodd'
-                        d='M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z'
-                        clipRule='evenodd'
+                      👤 Personal Details
+                    </div>
+                    <div className='row g-3'>
+                      <FormField
+                        field='title'
+                        label='Title'
+                        cols={3}
+                        options={TITLE_CHOICES}
                       />
-                    </svg>
-                    <h6 className='mb-0 fw-bold' style={{ color: '#92400e' }}>
-                      Add New Applicant
-                    </h6>
-                  </div>
-                  <button
-                    type='button'
-                    className='btn btn-sm p-2 rounded-2'
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid #fed7aa',
-                      color: '#92400e',
-                    }}
-                    onClick={() => setShowAddForm(false)}
-                  >
-                    <svg
-                      width='16'
-                      height='16'
-                      fill='currentColor'
-                      viewBox='0 0 20 20'
-                    >
-                      <path
-                        fillRule='evenodd'
-                        d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
-                        clipRule='evenodd'
+                      <FormField
+                        field='first_name'
+                        label='First Name'
+                        cols={3}
                       />
-                    </svg>
-                  </button>
-                </div>
+                      <FormField field='last_name' label='Last Name' cols={3} />
+                      <FormField
+                        field='pps_number'
+                        label={idNumberArray[0]}
+                        cols={3}
+                      />
+                      <FormField
+                        field='date_of_birth'
+                        label='Date of Birth'
+                        type='date'
+                        cols={6}
+                      />
+                    </div>
+                  </div>
 
-                <div className='row g-4'>
-                  <div className='col-md-3'>
-                    <label
-                      className='form-label fw-semibold mb-2'
-                      style={{ color: '#374151', fontSize: '0.875rem' }}
-                    >
-                      Title
-                    </label>
-                    <select
-                      className={getFieldClassName('title')}
-                      style={{
-                        backgroundColor: '#ffffff',
-                        fontSize: '0.875rem',
-                      }}
-                      value={newApplicant.title}
-                      onChange={(e) => handleNewApplicantChange(e, 'title')}
-                    >
-                      <option value=''>Select Title</option>
-                      {TITLE_CHOICES.map((choice) => (
-                        <option key={choice.value} value={choice.value}>
-                          {choice.label}
-                        </option>
-                      ))}
-                    </select>
+                  {/* Contact & Address */}
+                  <div className='row g-3 mb-4'>
+                    <div className='col-md-6'>
+                      <div
+                        className='mb-3'
+                        style={{
+                          fontSize: '0.8rem',
+                          color: '#059669',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                        }}
+                      >
+                        📞 Contact Information
+                      </div>
+                      <div className='row g-3'>
+                        <FormField
+                          field='email'
+                          label='Email Address'
+                          type='email'
+                          cols={12}
+                        />
+                        <FormField
+                          field='phone_number'
+                          label='Phone Number'
+                          type='tel'
+                          cols={12}
+                        />
+                      </div>
+                    </div>
+                    <div className='col-md-6'>
+                      <div
+                        className='mb-3'
+                        style={{
+                          fontSize: '0.8rem',
+                          color: '#7c3aed',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                        }}
+                      >
+                        🏠 Address Details
+                      </div>
+                      <div className='row g-3'>
+                        <FormField
+                          field='address_line_1'
+                          label='Address Line 1'
+                          cols={12}
+                        />
+                        <FormField
+                          field='address_line_2'
+                          label='Address Line 2'
+                          cols={12}
+                        />
+                        <FormField field='city' label='City' cols={6} />
+                        <FormField field='county' label='County' cols={6} />
+                        <FormField
+                          field='postal_code'
+                          label='Postal Code'
+                          cols={6}
+                        />
+                        <FormField field='country' label='Country' cols={6} />
+                      </div>
+                    </div>
                   </div>
-                  <div className='col-md-3'>
-                    <label
-                      className='form-label fw-semibold mb-2'
-                      style={{ color: '#374151', fontSize: '0.875rem' }}
-                    >
-                      First Name
-                    </label>
-                    <input
-                      type='text'
-                      className={getFieldClassName('first_name')}
+
+                  <div className='d-flex gap-3 justify-content-end'>
+                    <button
+                      className='btn'
                       style={{
-                        backgroundColor: '#ffffff',
-                        fontSize: '0.875rem',
+                        background: 'linear-gradient(135deg, #6b7280, #4b5563)',
+                        color: 'white',
+                        borderRadius: '10px',
+                        border: 'none',
+                        fontSize: '0.9rem',
+                        padding: '8px 20px',
+                        fontWeight: '600',
+                        boxShadow: '0 2px 8px rgba(107, 114, 128, 0.3)',
                       }}
-                      value={newApplicant.first_name}
-                      onChange={(e) =>
-                        handleNewApplicantChange(e, 'first_name')
-                      }
-                      placeholder='Enter first name'
-                    />
-                  </div>
-                  <div className='col-md-3'>
-                    <label
-                      className='form-label fw-semibold mb-2'
-                      style={{ color: '#374151', fontSize: '0.875rem' }}
+                      onClick={() => {
+                        setShowAddForm(false);
+                        resetForm();
+                      }}
                     >
-                      Last Name
-                    </label>
-                    <input
-                      type='text'
-                      className={getFieldClassName('last_name')}
+                      Cancel
+                    </button>
+                    <button
+                      className='btn'
+                      onClick={addApplicant}
+                      disabled={!isFormValid}
                       style={{
-                        backgroundColor: '#ffffff',
-                        fontSize: '0.875rem',
+                        background: isFormValid
+                          ? 'linear-gradient(135deg, #10b981, #059669)'
+                          : 'linear-gradient(135deg, #9ca3af, #6b7280)',
+                        color: 'white',
+                        borderRadius: '10px',
+                        border: 'none',
+                        fontSize: '0.9rem',
+                        padding: '8px 20px',
+                        cursor: isFormValid ? 'pointer' : 'not-allowed',
+                        fontWeight: '600',
+                        boxShadow: isFormValid
+                          ? '0 2px 8px rgba(16, 185, 129, 0.3)'
+                          : '0 2px 8px rgba(156, 163, 175, 0.3)',
                       }}
-                      value={newApplicant.last_name}
-                      onChange={(e) => handleNewApplicantChange(e, 'last_name')}
-                      placeholder='Enter last name'
-                    />
-                  </div>
-                  <div className='col-md-3'>
-                    <label
-                      className='form-label fw-semibold mb-2'
-                      style={{ color: '#374151', fontSize: '0.875rem' }}
+                      onMouseOver={(e) => {
+                        if (isFormValid) {
+                          e.target.style.transform = 'scale(1.02)';
+                          e.target.style.boxShadow =
+                            '0 4px 12px rgba(16, 185, 129, 0.4)';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (isFormValid) {
+                          e.target.style.transform = 'scale(1)';
+                          e.target.style.boxShadow =
+                            '0 2px 8px rgba(16, 185, 129, 0.3)';
+                        }
+                      }}
                     >
-                      PPS Number
-                    </label>
-                    <input
-                      type='text'
-                      className={getFieldClassName('pps_number')}
-                      style={{
-                        backgroundColor: '#ffffff',
-                        fontSize: '0.875rem',
-                      }}
-                      value={newApplicant.pps_number}
-                      onChange={(e) =>
-                        handleNewApplicantChange(e, 'pps_number')
-                      }
-                      placeholder='1234567X(X)'
-                    />
+                      💾 Save Applicant
+                    </button>
                   </div>
                 </div>
-
-                <div className='d-flex justify-content-end mt-4'>
+              ) : (
+                <div className='text-center py-4'>
                   <button
-                    type='button'
-                    className='btn px-4 py-2 fw-semibold rounded-3 d-flex align-items-center gap-2'
+                    className='btn'
                     style={{
-                      background: isApplicantFormValid
-                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                        : 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)',
+                      background:
+                        'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                       color: 'white',
                       border: 'none',
-                      fontSize: '0.875rem',
+                      borderRadius: '12px',
+                      fontSize: '1rem',
+                      padding: '12px 32px',
+                      fontWeight: '700',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
                     }}
-                    onClick={addApplicant}
-                    disabled={!isApplicantFormValid}
+                    onClick={() => setShowAddForm(true)}
+                    onMouseOver={(e) => {
+                      e.target.style.transform = 'scale(1.05)';
+                      e.target.style.boxShadow =
+                        '0 6px 16px rgba(59, 130, 246, 0.4)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.transform = 'scale(1)';
+                      e.target.style.boxShadow =
+                        '0 4px 12px rgba(59, 130, 246, 0.3)';
+                    }}
                   >
-                    <svg
-                      width='16'
-                      height='16'
-                      fill='currentColor'
-                      viewBox='0 0 20 20'
-                    >
-                      <path
-                        fillRule='evenodd'
-                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                    Add Applicant
+                    ➕ Add Applicant
                   </button>
                 </div>
-              </div>
-            )}
-        </div>
-      ) : (
-        <div
-          className='d-flex justify-content-center align-items-center'
-          style={{ minHeight: '200px' }}
-        >
-          <LoadingComponent />
-        </div>
-      )}
-    </>
+              )}
+            </>
+          )}
+
+        {/* Success Message */}
+        {hasApplicant && (
+          <div
+            className='text-center py-3'
+            style={{
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+              borderRadius: '10px',
+              fontSize: '0.9rem',
+              color: '#059669',
+              fontWeight: '700',
+              border: '1px solid #bbf7d0',
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)',
+            }}
+          >
+            ✅ Applicant information has been completed successfully!
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
