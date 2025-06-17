@@ -240,6 +240,7 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
           refreshEstates={() => setRefresh(!refresh)}
           currency_sign={application.currency_sign}
           isAdmin={isAdmin}
+          application={application}
         />
       </div>
     );
@@ -684,6 +685,7 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
         refreshEstates={() => setRefresh(!refresh)}
         currency_sign={application.currency_sign}
         isAdmin={isAdmin}
+        application={application}
       />
     </div>
   );

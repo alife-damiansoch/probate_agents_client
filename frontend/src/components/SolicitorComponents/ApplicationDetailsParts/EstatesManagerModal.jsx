@@ -60,6 +60,7 @@ const EstateManagerModal = ({
   refreshEstates,
   currency_sign = '€',
   isAdmin = false,
+  application,
 }) => {
   if (!show) return null;
 
@@ -675,6 +676,7 @@ const EstateManagerModal = ({
         initialData={formState.initialData}
         currency_sign={currency_sign}
         isAdmin={isAdmin}
+        application={application}
       />
     </div>
   );

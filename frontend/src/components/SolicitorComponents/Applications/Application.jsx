@@ -376,15 +376,15 @@ const Application = ({ application }) => {
         </div>
       )}
 
-      <style jsx>{`
-        .application-card {
-          will-change: transform;
-        }
+      <style>{`
+  .application-card {
+    will-change: transform;
+  }
 
-        .cursor-pointer {
-          cursor: pointer;
-        }
-      `}</style>
+  .cursor-pointer {
+    cursor: pointer;
+  }
+`}</style>
     </>
   );
 };

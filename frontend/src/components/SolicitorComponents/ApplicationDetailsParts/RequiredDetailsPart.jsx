@@ -38,6 +38,15 @@ const RequiredDetailsPart = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (application && !application.applicants) {
+      setApplication({
+        ...application,
+        applicants: [],
+      });
+    }
+  }, [application]);
+
   const getFilteredApplicationData = (application) => {
     const {
       amount,
@@ -59,15 +68,39 @@ const RequiredDetailsPart = ({
         details: dispute.details,
       },
       applicants: applicants.map(
-        ({ title, first_name, last_name, pps_number }) => ({
+        ({
+          id,
           title,
           first_name,
           last_name,
           pps_number,
+          address_line_1,
+          address_line_2,
+          city,
+          county,
+          postal_code,
+          country,
+          date_of_birth,
+          email,
+          phone_number,
+        }) => ({
+          id,
+          title,
+          first_name,
+          last_name,
+          pps_number,
+          address_line_1,
+          address_line_2,
+          city,
+          county,
+          postal_code,
+          country,
+          date_of_birth,
+          email,
+          phone_number,
         })
       ),
-
-      was_will_prepared_by_solicitor, // Include this field
+      was_will_prepared_by_solicitor,
     };
   };
 
@@ -98,10 +131,18 @@ const RequiredDetailsPart = ({
   };
 
   const addItem = (listName, newItem) => {
-    setApplication({
-      ...application,
-      [listName]: [...application[listName], newItem],
-    });
+    // Ensure applicants array exists - agents can have multiple applicants
+    if (listName === 'applicants') {
+      setApplication({
+        ...application,
+        [listName]: [...(application[listName] || []), newItem],
+      });
+    } else {
+      setApplication({
+        ...application,
+        [listName]: [...(application[listName] || []), newItem],
+      });
+    }
   };
 
   const removeItem = (listName, index) => {
@@ -137,6 +178,8 @@ const RequiredDetailsPart = ({
       if (filteredApplication.dispute.details.trim() === '') {
         filteredApplication.dispute.details = 'No dispute';
       }
+      console.log('Application Data:', application);
+      console.log('Filtered Application Data:', filteredApplication);
 
       try {
         const endpoint = `/api/applications/agent_applications/${id}/`;
@@ -160,10 +203,20 @@ const RequiredDetailsPart = ({
         } else {
           setErrorMessage(error.message);
         }
+      } finally {
+        // Scroll to the top of the RequiredDetailsPart component instead of page top
+        const requiredDetailsElement = document.getElementById(
+          'required-details-part'
+        );
+        if (requiredDetailsElement) {
+          requiredDetailsElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
+          });
+        }
+        setRefresh(!refresh);
       }
-      // Scroll to the top of the page
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setRefresh(!refresh);
     }
   };
 
@@ -211,6 +264,7 @@ const RequiredDetailsPart = ({
   return (
     <div
       className='bg-white rounded-4 p-4 mb-4'
+      id='required-details-part'
       style={{
         boxShadow:
           '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
