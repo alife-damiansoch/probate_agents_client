@@ -468,6 +468,7 @@ const ApplicationDetails = () => {
           user={user}
           currentRequirements={currentRequirements}
           setCurrentRequirements={setCurrentRequirements}
+          manageDocummentButtonDisabled={application.processing_status === null}
         />
 
         {/* Modals and Forms */}
