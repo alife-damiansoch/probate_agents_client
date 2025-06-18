@@ -18,6 +18,7 @@ import RejectionForm from '../ApplicationDetailsParts/RejectionForm';
 import RequiredDetailsPart from '../ApplicationDetailsParts/RequiredDetailsPart';
 import SolicitorPart from '../ApplicationDetailsParts/SolicitorPart';
 import ApplicationDetailStages from './ApplicationDetailStages';
+import InternalFilesManager from './InternalFilesComponents/InternalFilesManager.jsx';
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -516,7 +517,12 @@ const ApplicationDetails = () => {
           setCurrentRequirements={setCurrentRequirements}
           manageDocummentButtonDisabled={application.processing_status === null}
         />
-
+        <InternalFilesManager
+          applicationId={application.id}
+          refresh={refresh}
+          setRefresh={setRefresh}
+          user={user}
+        />
         {/* Modals and Forms */}
         {deleteAppId !== '' && (
           <DeleteApplication
