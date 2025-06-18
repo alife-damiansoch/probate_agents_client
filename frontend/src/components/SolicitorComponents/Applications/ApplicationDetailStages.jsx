@@ -103,15 +103,13 @@ const ApplicationDetailStages = ({
 
     // Check for missing template documents
     const getMissingTemplateDocuments = () => {
-      const agentMessage = '';
-
       // Check if no documents exist
       if (
         !application.documents ||
         !Array.isArray(application.documents) ||
         application.documents.length === 0
       ) {
-        return [agentMessage];
+        return ['No documents have been created yet'];
       }
 
       // Check for missing signatures
@@ -126,13 +124,8 @@ const ApplicationDetailStages = ({
           } - Signature Required${signerInfo}`;
         });
 
-      // If no missing signatures but documents exist, show only agent message
-      if (missingSignatures.length === 0) {
-        return [agentMessage];
-      }
-
-      // If there are missing signatures, show agent message + missing signatures
-      return [agentMessage, ...missingSignatures];
+      // Return only missing signatures (no empty agent message)
+      return missingSignatures;
     };
 
     const missingTemplateDocuments = getMissingTemplateDocuments();
