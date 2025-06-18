@@ -14,6 +14,7 @@ const ApplicantsPart = ({
   triggerHandleChange,
   setTriggerChandleChange,
   isAdmin = false,
+  isApplicationLocked,
 }) => {
   const [newApplicant, setNewApplicant] = useState({
     title: '',
@@ -100,7 +101,10 @@ const ApplicantsPart = ({
   const getEditButton = (field) => {
     const isEditing = editMode[field];
     const isDisabled =
-      application.approved || application.is_rejected || !isAdmin;
+      application.approved ||
+      application.is_rejected ||
+      !isAdmin ||
+      isApplicationLocked;
 
     if (isDisabled) {
       return (

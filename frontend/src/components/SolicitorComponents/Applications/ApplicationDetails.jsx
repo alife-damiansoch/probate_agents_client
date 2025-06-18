@@ -40,6 +40,7 @@ const ApplicationDetails = () => {
   const user = useSelector((state) => state.user.user);
 
   const [currentRequirements, setCurrentRequirements] = useState([]);
+  const [isApplicationLocked, setIsApplicationLocked] = useState(false);
 
   useEffect(() => {
     const fetchApplication = async () => {
@@ -57,6 +58,14 @@ const ApplicationDetails = () => {
 
     fetchApplication();
   }, [token, id, refresh, comments]);
+
+  useEffect(() => {
+    if (
+      application?.processing_status?.application_details_completed_confirmed
+    ) {
+      setIsApplicationLocked(true);
+    }
+  }, [application]);
 
   useEffect(() => {
     const fetchAdvancementForApplication = async () => {
@@ -229,15 +238,23 @@ const ApplicationDetails = () => {
           </div>
 
           {/* Status Alert */}
-          {(application.is_rejected || application.approved) && (
+          {(application.is_rejected ||
+            application.approved ||
+            isApplicationLocked) && (
             <div
               className='mx-4 mb-4 p-3 rounded-3 d-flex align-items-center gap-3'
               style={{
                 backgroundColor: application.is_rejected
                   ? '#fef2f2'
-                  : '#f0fdf4',
+                  : application.approved
+                  ? '#f0fdf4'
+                  : '#fef3c7', // Yellow background for locked
                 border: `1px solid ${
-                  application.is_rejected ? '#fecaca' : '#bbf7d0'
+                  application.is_rejected
+                    ? '#fecaca'
+                    : application.approved
+                    ? '#bbf7d0'
+                    : '#fde68a' // Yellow border for locked
                 }`,
                 marginTop: '16px',
               }}
@@ -249,7 +266,9 @@ const ApplicationDetails = () => {
                   height: '40px',
                   backgroundColor: application.is_rejected
                     ? '#dc2626'
-                    : '#059669',
+                    : application.approved
+                    ? '#059669'
+                    : '#d97706', // Orange/amber for locked
                   color: 'white',
                 }}
               >
@@ -266,7 +285,7 @@ const ApplicationDetails = () => {
                       clipRule='evenodd'
                     />
                   </svg>
-                ) : (
+                ) : application.approved ? (
                   <svg
                     width='20'
                     height='20'
@@ -279,24 +298,50 @@ const ApplicationDetails = () => {
                       clipRule='evenodd'
                     />
                   </svg>
+                ) : (
+                  // Lock icon for locked state
+                  <svg
+                    width='20'
+                    height='20'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path
+                      fillRule='evenodd'
+                      d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
+                      clipRule='evenodd'
+                    />
+                  </svg>
                 )}
               </div>
               <div>
                 <h6
                   className='mb-1 fw-bold'
                   style={{
-                    color: application.is_rejected ? '#dc2626' : '#059669',
+                    color: application.is_rejected
+                      ? '#dc2626'
+                      : application.approved
+                      ? '#059669'
+                      : '#d97706', // Orange/amber for locked
                   }}
                 >
                   Application{' '}
-                  {application.is_rejected ? 'Rejected' : 'Approved'}
+                  {application.is_rejected
+                    ? 'Rejected'
+                    : application.approved
+                    ? 'Approved'
+                    : 'Locked'}
                 </h6>
                 <p
                   className='mb-0'
                   style={{ fontSize: '0.875rem', color: '#6b7280' }}
                 >
                   Options and editing are not available because application is{' '}
-                  {application.is_rejected ? 'rejected' : 'approved'}
+                  {application.is_rejected
+                    ? 'rejected'
+                    : application.approved
+                    ? 'approved'
+                    : 'locked'}
                 </p>
               </div>
             </div>
@@ -459,6 +504,7 @@ const ApplicationDetails = () => {
           refresh={refresh}
           setRefresh={setRefresh}
           user={user}
+          isApplicationLocked={isApplicationLocked}
         />
 
         <DocumentsUpload

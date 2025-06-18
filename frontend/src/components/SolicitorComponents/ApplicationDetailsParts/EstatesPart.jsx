@@ -10,7 +10,13 @@ import {
   getEstates,
 } from '../../GenericFunctions/HelperGenericFunctions';
 
-const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
+const EstatesPart = ({
+  application,
+  refresh,
+  setRefresh,
+  isAdmin,
+  isApplicationLocked,
+}) => {
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEstateModal, setShowEstateModal] = useState(false);
@@ -225,6 +231,12 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
                 e.target.style.backgroundColor = '#3b82f6';
                 e.target.style.transform = 'translateY(0)';
               }}
+              disabled={
+                application.approved ||
+                application.is_rejected ||
+                !isAdmin ||
+                isApplicationLocked
+              }
             >
               <FaPlus className='me-2' size={14} />
               Manage Estates
@@ -664,6 +676,12 @@ const EstatesPart = ({ application, refresh, setRefresh, isAdmin }) => {
               e.target.style.color = '#3b82f6';
               e.target.style.transform = 'translateY(0)';
             }}
+            disabled={
+              application.approved ||
+              application.is_rejected ||
+              !isAdmin ||
+              isApplicationLocked
+            }
           >
             <FaCog className='me-2' size={14} />
             Manage Estates
