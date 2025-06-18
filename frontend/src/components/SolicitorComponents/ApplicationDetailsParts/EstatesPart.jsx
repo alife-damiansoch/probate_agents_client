@@ -16,6 +16,8 @@ const EstatesPart = ({
   setRefresh,
   isAdmin,
   isApplicationLocked,
+  isAmountWithinLimits,
+  setIsAmountWithinLimits,
 }) => {
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -692,6 +694,8 @@ const EstatesPart = ({
           estates={estates}
           formData={application}
           currency_sign={application.currency_sign}
+          setIsAmountWithinLimits={setIsAmountWithinLimits}
+          isAmountWithinLimits={isAmountWithinLimits}
         />
       </div>
 

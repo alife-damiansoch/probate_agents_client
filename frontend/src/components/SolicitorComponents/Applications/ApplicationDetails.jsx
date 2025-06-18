@@ -19,6 +19,7 @@ import RequiredDetailsPart from '../ApplicationDetailsParts/RequiredDetailsPart'
 import SolicitorPart from '../ApplicationDetailsParts/SolicitorPart';
 import ApplicationDetailStages from './ApplicationDetailStages';
 import InternalFilesManager from './InternalFilesComponents/InternalFilesManager.jsx';
+import SimpleDisabledButton from './SimpleDisabledButton.jsx';
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -42,6 +43,9 @@ const ApplicationDetails = () => {
 
   const [currentRequirements, setCurrentRequirements] = useState([]);
   const [isApplicationLocked, setIsApplicationLocked] = useState(false);
+
+  const [allStagesCompleted, setAllStagesCompleted] = useState(false);
+  const [isAmountWithinLimits, setIsAmountWithinLimits] = useState(false);
 
   useEffect(() => {
     const fetchApplication = async () => {
@@ -356,6 +360,8 @@ const ApplicationDetails = () => {
             refresh={refresh}
             setRefresh={setRefresh}
             currentRequirements={currentRequirements}
+            allStagesCompleted={allStagesCompleted}
+            setAllStagesCompleted={setAllStagesCompleted}
           />
 
           {/* Action Cards */}
@@ -372,34 +378,12 @@ const ApplicationDetails = () => {
                   Actions
                 </h5>
                 <div className='row g-3'>
-                  <div className='col-lg-4'>
-                    <button
-                      className='btn w-100 py-3 fw-semibold rounded-3 d-flex align-items-center justify-content-center gap-2'
-                      style={{
-                        background:
-                          'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: 'white',
-                        border: 'none',
-                        fontSize: '0.875rem',
-                      }}
-                      onClick={handleApprove}
-                      disabled={application.approved || application.is_rejected}
-                    >
-                      <svg
-                        width='16'
-                        height='16'
-                        fill='currentColor'
-                        viewBox='0 0 20 20'
-                      >
-                        <path
-                          fillRule='evenodd'
-                          d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                          clipRule='evenodd'
-                        />
-                      </svg>
-                      Approve for Advancement
-                    </button>
-                  </div>
+                  <SimpleDisabledButton
+                    allStagesCompleted={allStagesCompleted}
+                    onButtonClick={handleApprove}
+                    buttonText='Approve for Advancement'
+                    isAmountWithinLimits={isAmountWithinLimits}
+                  />
 
                   <div className='col-lg-4'>
                     <button
@@ -509,6 +493,8 @@ const ApplicationDetails = () => {
             setRefresh={setRefresh}
             user={user}
             isApplicationLocked={isApplicationLocked}
+            isAmountWithinLimits={isAmountWithinLimits}
+            setIsAmountWithinLimits={setIsAmountWithinLimits}
           />
 
           <DocumentsUpload

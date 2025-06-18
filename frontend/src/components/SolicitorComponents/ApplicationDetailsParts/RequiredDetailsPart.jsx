@@ -14,6 +14,8 @@ const RequiredDetailsPart = ({
   setRefresh,
   user,
   isApplicationLocked,
+  isAmountWithinLimits,
+  setIsAmountWithinLimits,
 }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isError, setIsError] = useState(false);
@@ -905,6 +907,8 @@ const RequiredDetailsPart = ({
         refresh={refresh}
         setRefresh={setRefresh}
         isApplicationLocked={isApplicationLocked}
+        setIsAmountWithinLimits={setIsAmountWithinLimits}
+        isAmountWithinLimits={isAmountWithinLimits}
       />
     </div>
   );

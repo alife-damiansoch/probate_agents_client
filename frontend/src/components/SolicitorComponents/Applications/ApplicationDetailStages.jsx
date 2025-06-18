@@ -20,6 +20,8 @@ const ApplicationDetailStages = ({
   refresh,
   setRefresh,
   currentRequirements,
+  allStagesCompleted,
+  setAllStagesCompleted,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [showCCRUploadModal, setShowCCRUploadModal] = useState(false);
@@ -47,18 +49,28 @@ const ApplicationDetailStages = ({
     fetchInternalFiles();
   }, [application?.id, refresh]);
 
-  console.log('APPLCATION DETAILS:', application);
+  useEffect(() => {
+    const calculateCompletionStatus = () => {
+      if (!application) return false;
+
+      const steps = getTimelineSteps();
+
+      const allTimelineStepsComplete = steps.every((step) => step.completed);
+
+      return allTimelineStepsComplete;
+    };
+
+    const completionStatus = calculateCompletionStatus();
+
+    setAllStagesCompleted(completionStatus);
+  }, [application, internalFiles, currentRequirements, refresh]);
 
   const getTimelineSteps = () => {
-    // Existing validations
-    const requiredDocsComplete =
-      application.loan_agreement_ready && application.undertaking_ready;
     const estateValue =
       parseFloat(application.value_of_the_estate_after_expenses) || 0;
     const estateValueComplete = estateValue > 0;
     const solicitorAssigned = application.solicitor !== null;
 
-    // New validations for submitted stage
     const amountValid =
       application.amount && parseFloat(application.amount) > 0;
     const applicantsValid =
@@ -72,15 +84,12 @@ const ApplicationDetailStages = ({
 
     const submittedComplete = amountValid && applicantsValid && deceasedValid;
 
-    // Processing status validation
     const processingStatusComplete =
       application.processing_status?.application_details_completed_confirmed ||
       false;
 
-    // CCR file validation
     const ccrFileComplete = internalFiles.some((file) => file.is_ccr === true);
 
-    // Add this check for all previous steps completion
     const allPreviousStepsComplete =
       submittedComplete &&
       solicitorAssigned &&
@@ -88,62 +97,55 @@ const ApplicationDetailStages = ({
       processingStatusComplete &&
       ccrFileComplete;
 
-    console.log('CURRENT REQUIREMENTS:', currentRequirements);
-
-    // Check for missing requirements from currentRequirements
     const missingRequirements = [];
     if (currentRequirements && Array.isArray(currentRequirements)) {
       const missingRequirementNames = currentRequirements
         .filter((req) => !req.is_uploaded)
         .map((req) => req.document_type?.name)
-        .filter(Boolean); // Remove any undefined/null names
-
+        .filter(Boolean);
       missingRequirements.push(...missingRequirementNames);
     }
 
-    // Check for missing template documents
     const getMissingTemplateDocuments = () => {
-      // Check if no documents exist
-      if (
-        !application.documents ||
-        !Array.isArray(application.documents) ||
-        application.documents.length === 0
-      ) {
-        return ['No documents have been created yet'];
+      const allDocs = [
+        ...(application.documents || []),
+        ...(application.signed_documents || []),
+      ];
+
+      if (allDocs.length === 0) {
+        return ['No documents have been uploaded'];
       }
 
-      // Check for missing signatures
-      const missingSignatures = application.documents
-        .filter((doc) => doc.signature_required && !doc.is_signed)
-        .map((doc) => {
-          const signerInfo = doc.who_needs_to_sign
-            ? ` (${doc.who_needs_to_sign})`
-            : '';
-          return `${
-            doc.original_name || doc.title
-          } - Signature Required${signerInfo}`;
-        });
+      const missingUploads = allDocs
+        .filter((doc) => doc.is_required && !doc.is_uploaded)
+        .map((doc) => `${doc.original_name || doc.title} - Not uploaded`);
 
-      // Return only missing signatures (no empty agent message)
-      return missingSignatures;
+      if (missingUploads.length > 0) {
+        return missingUploads;
+      }
+
+      const signatureIssues = allDocs
+        .filter((doc) => doc.signature_required && !doc.is_signed)
+        .map((doc) => `${doc.original_name || doc.title} - Signature required`);
+
+      return signatureIssues;
     };
 
     const missingTemplateDocuments = getMissingTemplateDocuments();
-
-    // Combine all missing documents
     const allMissingDocuments = [
       ...missingRequirements,
       ...missingTemplateDocuments,
     ];
 
-    // Check if all documents are complete (both requirements and templates)
     const allRequirementsUploaded = currentRequirements
       ? currentRequirements.every((req) => req.is_uploaded)
       : true;
-    const allDocumentsComplete =
-      requiredDocsComplete && allRequirementsUploaded;
 
-    // Build missing requirements list for submitted stage
+    const allDocumentsComplete =
+      allRequirementsUploaded && allMissingDocuments.length === 0;
+
+    console.log(allMissingDocuments);
+
     const missingSubmittedRequirements = [];
     if (!amountValid) missingSubmittedRequirements.push('Loan Amount');
     if (!applicantsValid)
@@ -250,15 +252,12 @@ const ApplicationDetailStages = ({
               >
                 Agent: Ensure all requirements are added and documents created
               </div>
-              {allMissingDocuments.length > 0 &&
-                allMissingDocuments[0] !== '' && (
-                  <div>
-                    Missing:{' '}
-                    {allMissingDocuments
-                      .filter((doc) => doc && doc.trim() !== '')
-                      .join(', ')}
-                  </div>
-                )}
+              <div>
+                Missing:{' '}
+                {allMissingDocuments
+                  .filter((doc) => doc && doc.trim() !== '')
+                  .join(', ')}
+              </div>
             </div>
           ) : (
             'Documents pending'
@@ -276,24 +275,22 @@ const ApplicationDetailStages = ({
     ];
   };
 
-  const getStatusStep = () => {
-    return {
-      id: 'review',
-      title: 'Under Review',
-      description: application.approved
-        ? application.loan?.needs_committee_approval
-          ? 'Approved - Committee pending'
-          : 'Application approved'
-        : application.is_rejected
-        ? 'Application rejected'
-        : 'Under review',
-      completed: application.approved || application.is_rejected,
-      userAction: false,
-      icon: application.approved ? '✅' : application.is_rejected ? '❌' : '🔍',
-      isError: application.is_rejected,
-      actionRequired: false,
-    };
-  };
+  const getStatusStep = () => ({
+    id: 'review',
+    title: 'Under Review',
+    description: application.approved
+      ? application.loan?.needs_committee_approval
+        ? 'Approved - Committee pending'
+        : 'Application approved'
+      : application.is_rejected
+      ? 'Application rejected'
+      : 'Under review',
+    completed: application.approved || application.is_rejected,
+    userAction: false,
+    icon: application.approved ? '✅' : application.is_rejected ? '❌' : '🔍',
+    isError: application.is_rejected,
+    actionRequired: false,
+  });
 
   const handleConfirmProcessing = async (selectedMethod) => {
     try {
@@ -310,9 +307,9 @@ const ApplicationDetailStages = ({
       if (response && response.status >= 200 && response.status < 300) {
         setRefresh(!refresh);
       } else {
-        const errorMessage =
-          response?.data?.error || 'Failed to create processing status';
-        throw new Error(errorMessage);
+        throw new Error(
+          response?.data?.error || 'Failed to create processing status'
+        );
       }
     } catch (error) {
       console.error('Error confirming processing status:', error);
@@ -354,17 +351,12 @@ const ApplicationDetailStages = ({
               '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           }}
         >
-          {/* Timeline Header */}
           <TimelineHeader
             incompleteSteps={incompleteSteps}
             refresh={refresh}
             setRefresh={setRefresh}
           />
-
-          {/* Agent Instruction Alert */}
           <AgentInstructionAlert incompleteSteps={incompleteSteps} />
-
-          {/* Timeline Steps */}
           <div className='position-relative mb-3'>
             {userSteps.map((step, index) => (
               <TimelineStep
@@ -378,19 +370,12 @@ const ApplicationDetailStages = ({
               />
             ))}
           </div>
-
-          {/* Review Info */}
           <ReviewInfo statusStep={statusStep} />
-
-          {/* Progress Summary */}
           <ProgressSummary userSteps={userSteps} />
-
-          {/* Rejection Reason */}
           <RejectionReason application={application} />
         </div>
       )}
 
-      {/* Modals */}
       <ProcessingStatusModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
