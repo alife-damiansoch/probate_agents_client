@@ -13,6 +13,7 @@ const RequiredDetailsPart = ({
   refresh,
   setRefresh,
   user,
+  isApplicationLocked,
 }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isError, setIsError] = useState(false);
@@ -462,7 +463,10 @@ const RequiredDetailsPart = ({
                   toggleEditMode('amount');
                 }}
                 disabled={
-                  application.approved || application.is_rejected || !isAdmin
+                  application.approved ||
+                  application.is_rejected ||
+                  !isAdmin ||
+                  isApplicationLocked
                 }
               >
                 {getEditIcon('amount')}
@@ -537,7 +541,10 @@ const RequiredDetailsPart = ({
                   toggleEditMode('term');
                 }}
                 disabled={
-                  application.approved || application.is_rejected || !isAdmin
+                  application.approved ||
+                  application.is_rejected ||
+                  !isAdmin ||
+                  isApplicationLocked
                 }
               >
                 {getEditIcon('term')}
@@ -620,7 +627,10 @@ const RequiredDetailsPart = ({
                   toggleEditMode('deceased_first_name');
                 }}
                 disabled={
-                  application.approved || application.is_rejected || !isAdmin
+                  application.approved ||
+                  application.is_rejected ||
+                  !isAdmin ||
+                  isApplicationLocked
                 }
               >
                 {getEditIcon('deceased_first_name')}
@@ -693,7 +703,10 @@ const RequiredDetailsPart = ({
                   toggleEditMode('deceased_last_name');
                 }}
                 disabled={
-                  application.approved || application.is_rejected || !isAdmin
+                  application.approved ||
+                  application.is_rejected ||
+                  !isAdmin ||
+                  isApplicationLocked
                 }
               >
                 {getEditIcon('deceased_last_name')}
@@ -758,7 +771,10 @@ const RequiredDetailsPart = ({
                     setTriggerChandleChange(!triggerHandleChange);
                   }}
                   disabled={
-                    application.approved || application.is_rejected || !isAdmin
+                    application.approved ||
+                    application.is_rejected ||
+                    !isAdmin ||
+                    isApplicationLocked
                   }
                   style={{ marginTop: 0 }}
                 />
@@ -786,7 +802,10 @@ const RequiredDetailsPart = ({
                     setTriggerChandleChange(!triggerHandleChange);
                   }}
                   disabled={
-                    application.approved || application.is_rejected || !isAdmin
+                    application.approved ||
+                    application.is_rejected ||
+                    !isAdmin ||
+                    isApplicationLocked
                   }
                   style={{ marginTop: 0 }}
                 />
@@ -855,7 +874,10 @@ const RequiredDetailsPart = ({
               toggleEditMode('dispute_details');
             }}
             disabled={
-              application.approved || application.is_rejected || !isAdmin
+              application.approved ||
+              application.is_rejected ||
+              !isAdmin ||
+              isApplicationLocked
             }
           >
             {getEditIcon('dispute_details')}
@@ -875,12 +897,14 @@ const RequiredDetailsPart = ({
         triggerHandleChange={triggerHandleChange}
         setTriggerChandleChange={setTriggerChandleChange}
         isAdmin={isAdmin}
+        isApplicationLocked={isApplicationLocked}
       />
       <EstatesPart
         application={application}
         isAdmin={isAdmin}
         refresh={refresh}
         setRefresh={setRefresh}
+        isApplicationLocked={isApplicationLocked}
       />
     </div>
   );

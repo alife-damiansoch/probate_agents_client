@@ -254,7 +254,7 @@ const SolicitorPart = ({
               </select>
             </div>
             <small className='text-muted mt-1 d-block'>
-              Solicitor assignment is managed by administrators
+              Solicitor assignment is managed by solicitors
             </small>
           </div>
 

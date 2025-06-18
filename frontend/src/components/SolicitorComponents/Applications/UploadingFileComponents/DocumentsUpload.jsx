@@ -21,6 +21,7 @@ const DocumentsUpload = ({
   user,
   currentRequirements,
   setCurrentRequirements,
+  manageDocummentButtonDisabled = true,
 }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -352,7 +353,10 @@ const DocumentsUpload = ({
             </h6>
           </div>
           <div className='col-lg-4 text-end'>
-            <ManageDocumentsButton onClick={handleManageDocumentsClick} />
+            <ManageDocumentsButton
+              onClick={handleManageDocumentsClick}
+              manageDocummentButtonDisabled={manageDocummentButtonDisabled}
+            />
           </div>
         </div>
       </div>
