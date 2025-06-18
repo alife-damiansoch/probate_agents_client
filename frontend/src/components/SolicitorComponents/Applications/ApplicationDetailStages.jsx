@@ -47,6 +47,8 @@ const ApplicationDetailStages = ({
     fetchInternalFiles();
   }, [application?.id, refresh]);
 
+  console.log('APPLCATION DETAILS:', application);
+
   const getTimelineSteps = () => {
     // Existing validations
     const requiredDocsComplete =
@@ -100,10 +102,40 @@ const ApplicationDetailStages = ({
     }
 
     // Check for missing template documents
-    const missingTemplateDocuments = [
-      !application.loan_agreement_ready && 'Agreement',
-      !application.undertaking_ready && 'Undertaking',
-    ].filter(Boolean);
+    const getMissingTemplateDocuments = () => {
+      const agentMessage = '';
+
+      // Check if no documents exist
+      if (
+        !application.documents ||
+        !Array.isArray(application.documents) ||
+        application.documents.length === 0
+      ) {
+        return [agentMessage];
+      }
+
+      // Check for missing signatures
+      const missingSignatures = application.documents
+        .filter((doc) => doc.signature_required && !doc.is_signed)
+        .map((doc) => {
+          const signerInfo = doc.who_needs_to_sign
+            ? ` (${doc.who_needs_to_sign})`
+            : '';
+          return `${
+            doc.original_name || doc.title
+          } - Signature Required${signerInfo}`;
+        });
+
+      // If no missing signatures but documents exist, show only agent message
+      if (missingSignatures.length === 0) {
+        return [agentMessage];
+      }
+
+      // If there are missing signatures, show agent message + missing signatures
+      return [agentMessage, ...missingSignatures];
+    };
+
+    const missingTemplateDocuments = getMissingTemplateDocuments();
 
     // Combine all missing documents
     const allMissingDocuments = [
@@ -214,13 +246,33 @@ const ApplicationDetailStages = ({
       {
         id: 'documents',
         title: 'Required Documents',
-        description: allPreviousStepsComplete
-          ? allDocumentsComplete
-            ? 'All documents submitted'
-            : allMissingDocuments.length > 0
-            ? `Missing: ${allMissingDocuments.join(', ')}`
-            : 'Documents pending'
-          : 'Available after completing all previous steps',
+        description: allPreviousStepsComplete ? (
+          allDocumentsComplete ? (
+            'All documents submitted'
+          ) : allMissingDocuments.length > 0 ? (
+            <div>
+              <div
+                className='text-danger'
+                style={{ fontSize: '0.85rem', marginBottom: '4px' }}
+              >
+                Agent: Ensure all requirements are added and documents created
+              </div>
+              {allMissingDocuments.length > 0 &&
+                allMissingDocuments[0] !== '' && (
+                  <div>
+                    Missing:{' '}
+                    {allMissingDocuments
+                      .filter((doc) => doc && doc.trim() !== '')
+                      .join(', ')}
+                  </div>
+                )}
+            </div>
+          ) : (
+            'Documents pending'
+          )
+        ) : (
+          'Available after completing all previous steps'
+        ),
         completed: allDocumentsComplete,
         userAction: !allDocumentsComplete && allPreviousStepsComplete,
         icon: '📄',

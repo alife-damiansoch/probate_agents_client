@@ -90,27 +90,79 @@ const InternalFilesManager = ({ applicationId, refresh, setRefresh, user }) => {
   }
 
   return (
-    <div className='mb-5'>
-      <InternalFilesHeader
-        isAdmin={isAdmin}
-        onUploadClick={() => setIsUploadModalOpen(true)}
+    <div
+      className='my-5 p-4 rounded-4 position-relative overflow-hidden'
+      style={{
+        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+        border: '1px solid rgba(139, 92, 246, 0.3)',
+        boxShadow: '0 8px 32px rgba(139, 92, 246, 0.1)',
+      }}
+    >
+      {/* Glassmorphism overlay */}
+      <div
+        className='position-absolute top-0 start-0 w-100 h-100'
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 1,
+        }}
       />
 
-      <MessageDisplay
-        successMessage={successMessage}
-        errorMessage={errorMessage}
-      />
+      {/* Content wrapper */}
+      <div className='position-relative' style={{ zIndex: 2 }}>
+        {/* Internal Use Banner */}
+        <div
+          className='mb-4 p-3 rounded-3 d-flex align-items-center'
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
+            border: '1px solid rgba(139, 92, 246, 0.4)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <div
+            className='me-3 d-flex align-items-center justify-content-center rounded-circle'
+            style={{
+              width: '40px',
+              height: '40px',
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
+              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
+            }}
+          >
+            <i className='fas fa-user-shield text-white'></i>
+          </div>
+          <div>
+            <div className='fw-bold text-white mb-1'>Internal Workspace</div>
+            <div
+              className='small'
+              style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+            >
+              Agent & Admin Only • Client Restricted
+            </div>
+          </div>
+        </div>
 
-      <InternalFilesGrid
-        internalFiles={internalFiles}
-        isAdmin={isAdmin}
-        token={'token'}
-        onEditClick={handleEditClick}
-        setErrorMessage={setErrorMessage}
-        setSuccessMessage={setSuccessMessage}
-        refresh={refresh}
-        setRefresh={setRefresh}
-      />
+        <InternalFilesHeader
+          isAdmin={isAdmin}
+          onUploadClick={() => setIsUploadModalOpen(true)}
+        />
+
+        <MessageDisplay
+          successMessage={successMessage}
+          errorMessage={errorMessage}
+        />
+
+        <InternalFilesGrid
+          internalFiles={internalFiles}
+          isAdmin={isAdmin}
+          token={'token'}
+          onEditClick={handleEditClick}
+          setErrorMessage={setErrorMessage}
+          setSuccessMessage={setSuccessMessage}
+          refresh={refresh}
+          setRefresh={setRefresh}
+        />
+      </div>
 
       <InternalFileUploadModal
         isOpen={isUploadModalOpen}
