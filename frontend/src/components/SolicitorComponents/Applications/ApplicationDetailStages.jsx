@@ -1,19 +1,19 @@
 // src/components/ApplicationDetailStages/ApplicationDetailStages.js
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  fetchData,
   postData,
   uploadFile,
-  fetchData,
 } from '../../GenericFunctions/AxiosGenericFunctions';
 import { formatDate } from '../../GenericFunctions/HelperGenericFunctions';
+import AgentInstructionAlert from './ApplicationDetailStagesParts/AgentInstructionAlert';
 import CCRUploadModal from './ApplicationDetailStagesParts/CCRUploadModal';
 import ProcessingStatusModal from './ApplicationDetailStagesParts/ProcessingStatusModal';
-import TimelineStep from './ApplicationDetailStagesParts/TimelineStep';
-import TimelineHeader from './ApplicationDetailStagesParts/TimelineHeader';
 import ProgressSummary from './ApplicationDetailStagesParts/ProgressSummary';
 import RejectionReason from './ApplicationDetailStagesParts/RejectionReason';
-import AgentInstructionAlert from './ApplicationDetailStagesParts/AgentInstructionAlert';
 import ReviewInfo from './ApplicationDetailStagesParts/ReviewInfo';
+import TimelineHeader from './ApplicationDetailStagesParts/TimelineHeader';
+import TimelineStep from './ApplicationDetailStagesParts/TimelineStep';
 
 const ApplicationDetailStages = ({
   application,
@@ -310,7 +310,11 @@ const ApplicationDetailStages = ({
           }}
         >
           {/* Timeline Header */}
-          <TimelineHeader incompleteSteps={incompleteSteps} />
+          <TimelineHeader
+            incompleteSteps={incompleteSteps}
+            refresh={refresh}
+            setRefresh={setRefresh}
+          />
 
           {/* Agent Instruction Alert */}
           <AgentInstructionAlert incompleteSteps={incompleteSteps} />

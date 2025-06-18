@@ -1,6 +1,6 @@
 // src/components/ApplicationDetailStages/ApplicationDetailStagesParts/TimelineHeader.js
 
-const TimelineHeader = ({ incompleteSteps }) => {
+const TimelineHeader = ({ incompleteSteps, refresh, setRefresh }) => {
   return (
     <div className='d-flex align-items-center justify-content-between mb-3'>
       <h6 className='mb-0 fw-bold' style={{ color: '#111827' }}>
@@ -18,6 +18,9 @@ const TimelineHeader = ({ incompleteSteps }) => {
             padding: '4px 8px',
             borderRadius: '6px',
             transition: 'all 0.2s ease',
+          }}
+          onClick={() => {
+            setRefresh(!refresh);
           }}
         >
           <span style={{ fontSize: '0.7rem' }}>🔄</span>
