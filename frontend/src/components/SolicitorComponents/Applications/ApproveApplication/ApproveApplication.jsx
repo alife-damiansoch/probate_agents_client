@@ -7,7 +7,9 @@ import {
   fetchData,
   postData,
 } from '../../../GenericFunctions/AxiosGenericFunctions';
-import renderErrors from '../../../GenericFunctions/HelperGenericFunctions';
+import renderErrors, {
+  formatMoney,
+} from '../../../GenericFunctions/HelperGenericFunctions';
 import ApplicationSummaryCard from './ApplicationSummaryCard';
 
 const ApproveApplication = () => {
@@ -88,36 +90,47 @@ const ApproveApplication = () => {
   // Set loan details when application loads
   useEffect(() => {
     if (application) {
-      setLoanDetails({
-        amount_agreed: application.amount,
-        fee_agreed: '0',
-        term_agreed: application.term,
-        approved_date: new Date().toISOString().split('T')[0],
+      setLoanDetails((prevDetails) => ({
+        ...prevDetails,
+        amount_agreed: application.amount || 0,
+        term_agreed: application.term || 0,
         application: application.id,
-      });
+      }));
     }
   }, [application]);
 
-  // Calculate fee and check issues
+  // Calculate fee automatically when amount or term changes
   useEffect(() => {
-    if (
-      loanDetails &&
-      (loanDetails.amount_agreed || loanDetails.term_agreed) &&
-      application
-    ) {
-      let yearMultiplier = Math.ceil(loanDetails.term_agreed / 12);
-      const calculatedFee =
-        Math.round(loanDetails.amount_agreed * 0.15 * yearMultiplier * 100) /
-        100;
+    if (loanDetails.amount_agreed && loanDetails.term_agreed) {
+      const amount = parseFloat(loanDetails.amount_agreed) || 0;
+      const term = parseFloat(loanDetails.term_agreed) || 0;
 
-      if (calculatedFee !== loanDetails.fee_agreed) {
-        setLoanDetails((prevLoanDetails) => ({
-          ...prevLoanDetails,
+      if (amount > 0 && term > 0) {
+        const yearMultiplier = Math.ceil(term / 12);
+        const calculatedFee =
+          Math.round(amount * 0.15 * yearMultiplier * 100) / 100;
+
+        // Always update fee when amount or term changes, regardless of current fee value
+        setLoanDetails((prevDetails) => ({
+          ...prevDetails,
           fee_agreed: calculatedFee,
         }));
-      }
 
-      // Calculate ALL issues here
+        console.log(
+          'Fee calculated:',
+          calculatedFee,
+          'for amount:',
+          amount,
+          'term:',
+          term
+        );
+      }
+    }
+  }, [loanDetails.amount_agreed, loanDetails.term_agreed]);
+
+  // Calculate issues separately
+  useEffect(() => {
+    if (application && loanDetails.application !== 0) {
       const newIssues = [];
 
       // Only check issues if application is not approved and not rejected
@@ -178,10 +191,10 @@ const ApproveApplication = () => {
           application.amount
         ) {
           const maxAllowedAmount =
-            application.value_of_the_estate_after_expenses * 0.6;
+            application.value_of_the_estate_after_expenses * 0.5;
           if (maxAllowedAmount < parseFloat(application.amount)) {
             newIssues.push(
-              'Check the amounts. 60% of the total value after expenses is less than requested advancement amount.'
+              'Check the amounts. 50% of the total value after expenses is less than requested advancement amount.'
             );
           }
         }
@@ -197,9 +210,11 @@ const ApproveApplication = () => {
         }
 
         // Check fee vs amount
-        if (calculatedFee > loanDetails.amount_agreed) {
+        const calculatedFee = parseFloat(loanDetails.fee_agreed) || 0;
+        const amountAgreed = parseFloat(loanDetails.amount_agreed) || 0;
+        if (calculatedFee > amountAgreed) {
           newIssues.push(
-            'Check the amounts. 60% of the total value after expenses is bigger than the requested advancement amount.'
+            'Check the amounts. Fee is bigger than the requested advancement amount.'
           );
         }
       }
@@ -211,11 +226,12 @@ const ApproveApplication = () => {
       }
     }
   }, [
-    loanDetails.amount_agreed,
-    loanDetails.term_agreed,
     application,
+    loanDetails.fee_agreed,
+    loanDetails.amount_agreed,
     requirementStatus,
     requirements,
+    issues,
   ]);
 
   const handleChange = (e) => {
@@ -425,7 +441,10 @@ const ApproveApplication = () => {
                         </div>
                         <small className='text-muted mt-1 d-block'>
                           Formatted:{' '}
-                          {formatCurrency(loanDetails.amount_agreed || 0)}
+                          {formatMoney(
+                            loanDetails.amount_agreed || 0,
+                            application.currency_sign
+                          )}
                         </small>
                       </div>
 
@@ -474,7 +493,10 @@ const ApproveApplication = () => {
                         </div>
                         <small className='text-muted mt-1 d-block'>
                           Formatted:{' '}
-                          {formatCurrency(loanDetails.fee_agreed || 0)}
+                          {formatMoney(
+                            loanDetails.fee_agreed || 0,
+                            application.currency_sign
+                          )}
                         </small>
                       </div>
 

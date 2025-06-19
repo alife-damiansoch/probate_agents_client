@@ -628,6 +628,12 @@ const AdvancementDetail = () => {
                 markAdvancementPaidOutHandler={markAdvancementPaidOutHandler}
                 payOutReferenceNumber={payOutReferenceNumber}
                 setPayOutReferenceNumber={setPayOutReferenceNumber}
+                // Add these required props
+                patchData={patchData}
+                setErrorMessage={setErrorMessage}
+                setIsError={setIsError}
+                setRefresh={setRefresh}
+                refresh={refresh}
               />
             </div>
           </div>
