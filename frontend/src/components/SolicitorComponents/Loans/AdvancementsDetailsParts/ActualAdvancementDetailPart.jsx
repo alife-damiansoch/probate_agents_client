@@ -361,6 +361,136 @@ const ActualAdvancementDetailPart = ({
                   </div>
                 </div>
 
+                {/* Payout Date - New */}
+                {advancement.is_paid_out && (
+                  <div
+                    className='p-3 rounded-3'
+                    style={{
+                      background: advancement.paid_out_date
+                        ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
+                        : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                      border: advancement.paid_out_date
+                        ? '1px solid #86efac'
+                        : '1px solid #fca5a5',
+                    }}
+                  >
+                    <div className='d-flex align-items-center justify-content-between'>
+                      <div className='d-flex align-items-center gap-2'>
+                        <svg
+                          width='16'
+                          height='16'
+                          fill='currentColor'
+                          viewBox='0 0 20 20'
+                          style={{
+                            color: advancement.paid_out_date
+                              ? '#16a34a'
+                              : '#dc2626',
+                          }}
+                        >
+                          <path
+                            fillRule='evenodd'
+                            d='M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z'
+                            clipRule='evenodd'
+                          />
+                        </svg>
+                        <span
+                          className='fw-semibold'
+                          style={{ color: '#374151', fontSize: '0.9rem' }}
+                        >
+                          Paid Out Date:
+                        </span>
+                      </div>
+                      {advancement.paid_out_date ? (
+                        <span
+                          className='fw-semibold'
+                          style={{ color: '#16a34a', fontSize: '1rem' }}
+                        >
+                          {formatDate(advancement.paid_out_date)}
+                        </span>
+                      ) : (
+                        <span
+                          className='px-2 py-1 rounded-2 fw-bold text-uppercase'
+                          style={{
+                            background: '#dc2626',
+                            color: '#ffffff',
+                            fontSize: '0.7rem',
+                          }}
+                        >
+                          Missing Date
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Payout Reference Number - New */}
+                {advancement.is_paid_out && (
+                  <div
+                    className='p-3 rounded-3'
+                    style={{
+                      background: advancement.pay_out_reference_number
+                        ? 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'
+                        : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                      border: advancement.pay_out_reference_number
+                        ? '1px solid #7dd3fc'
+                        : '1px solid #fca5a5',
+                    }}
+                  >
+                    <div className='d-flex align-items-center justify-content-between'>
+                      <div className='d-flex align-items-center gap-2'>
+                        <svg
+                          width='16'
+                          height='16'
+                          fill='currentColor'
+                          viewBox='0 0 20 20'
+                          style={{
+                            color: advancement.pay_out_reference_number
+                              ? '#0ea5e9'
+                              : '#dc2626',
+                          }}
+                        >
+                          <path
+                            fillRule='evenodd'
+                            d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z'
+                            clipRule='evenodd'
+                          />
+                        </svg>
+                        <span
+                          className='fw-semibold'
+                          style={{ color: '#374151', fontSize: '0.9rem' }}
+                        >
+                          Reference Number:
+                        </span>
+                      </div>
+                      {advancement.pay_out_reference_number ? (
+                        <span
+                          className='fw-semibold px-2 py-1 rounded-2'
+                          style={{
+                            color: '#0c4a6e',
+                            fontSize: '0.9rem',
+                            background: 'rgba(14, 165, 233, 0.1)',
+                            border: '1px solid rgba(14, 165, 233, 0.2)',
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {advancement.pay_out_reference_number}
+                        </span>
+                      ) : (
+                        <span
+                          className='px-2 py-1 rounded-2 fw-bold text-uppercase'
+                          style={{
+                            background: '#dc2626',
+                            color: '#ffffff',
+                            fontSize: '0.7rem',
+                          }}
+                        >
+                          Missing Ref
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Maturity Date */}
                 <div
                   className='p-3 rounded-3'
@@ -396,7 +526,7 @@ const ActualAdvancementDetailPart = ({
                           fontSize: '0.8rem',
                         }}
                       >
-                        Not Paid Out
+                        Pay out date not set
                       </span>
                     )}
                   </div>

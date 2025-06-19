@@ -1,5 +1,10 @@
+import Cookies from 'js-cookie';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { patchData } from '../../../GenericFunctions/AxiosGenericFunctions';
+import LoanChecklistComponent from './LoanChecklistComponent';
+import FinalPayoutAuthorization from './LoanChecklistComponentParts/FinalPayoutAuthorization';
 
 const ActionsPart = ({
   advancement,
@@ -8,9 +13,45 @@ const ActionsPart = ({
   markAdvancementPaidOutHandler,
   payOutReferenceNumber,
   setPayOutReferenceNumber,
+  // Add these required props from parent
+  setErrorMessage,
+  setIsError,
+  setRefresh,
+  refresh,
 }) => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
+  const token = Cookies.get('auth_token_agents');
+
+  // Add missing state for checklist
+  const [showChecklistPart, setShowChecklistPart] = useState(false);
+
+  console.log('ADVANCEMENT', advancement);
+
+  // Helper function to check if payout authorization is needed
+  const needsPayoutAuthorization = () => {
+    return (
+      advancement.is_paid_out &&
+      (!advancement.paid_out_date ||
+        advancement.paid_out_date === null ||
+        advancement.paid_out_date === '' ||
+        !advancement.pay_out_reference_number ||
+        advancement.pay_out_reference_number === null ||
+        advancement.pay_out_reference_number === '')
+    );
+  };
+
+  // Show if showReferenceNumberPart is true OR if it needs authorization
+  const shouldShowPayoutAuth =
+    showReferenceNumberPart || needsPayoutAuthorization();
+
+  console.log('Should show payout auth:', shouldShowPayoutAuth);
+  console.log('advancement.is_paid_out:', advancement.is_paid_out);
+  console.log('advancement.paid_out_date:', advancement.paid_out_date);
+  console.log(
+    'advancement.pay_out_reference_number:',
+    advancement.pay_out_reference_number
+  );
 
   return (
     <div
@@ -48,6 +89,25 @@ const ActionsPart = ({
 
       {/* Body */}
       <div style={{ padding: '24px' }}>
+        {/* Payout Authorization - Show this FIRST if needed */}
+        {shouldShowPayoutAuth && (
+          <div className='mb-4'>
+            <FinalPayoutAuthorization
+              advancement={advancement}
+              onCancel={() => setShowReferenceNumberPart(false)}
+              onSuccess={() => {
+                setShowReferenceNumberPart(false);
+                // Handle success - maybe show confirmation
+              }}
+              patchData={patchData}
+              setErrorMessage={setErrorMessage}
+              setIsError={setIsError}
+              setRefresh={setRefresh}
+              refresh={refresh}
+            />
+          </div>
+        )}
+
         {!advancement.is_settled ? (
           <div className='d-flex align-items-center justify-content-center gap-3 flex-wrap'>
             <button
@@ -233,13 +293,13 @@ const ActionsPart = ({
                         advancement.needs_committee_approval &&
                         !advancement.is_committee_approved
                           ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
-                          : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                          : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
                       color: '#ffffff',
                       border: 'none',
-                      borderRadius: '8px',
-                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      padding: '14px 24px',
                       fontWeight: '600',
-                      fontSize: '0.95rem',
+                      fontSize: '1rem',
                       cursor:
                         advancement.needs_committee_approval &&
                         !advancement.is_committee_approved
@@ -250,25 +310,39 @@ const ActionsPart = ({
                         !advancement.is_committee_approved
                           ? 0.6
                           : 1,
+                      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+                      transition: 'all 0.3s ease',
                     }}
                     onClick={() => {
-                      setShowReferenceNumberPart(!showReferenceNumberPart);
+                      // Show checklist instead of reference number part
+                      setShowChecklistPart(!showChecklistPart);
                     }}
                     disabled={
                       advancement.needs_committee_approval &&
                       !advancement.is_committee_approved
                     }
+                    onMouseEnter={(e) => {
+                      if (!e.target.disabled) {
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow =
+                          '0 6px 20px rgba(139, 92, 246, 0.4)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow =
+                        '0 4px 12px rgba(139, 92, 246, 0.3)';
+                    }}
                   >
                     <svg
-                      width='18'
-                      height='18'
+                      width='20'
+                      height='20'
                       fill='currentColor'
                       viewBox='0 0 20 20'
                     >
-                      <path d='M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z' />
                       <path
                         fillRule='evenodd'
-                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.51-1.31c-.562-.649-1.413-1.076-2.353-1.253V5z'
+                        d='M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z'
                         clipRule='evenodd'
                       />
                     </svg>
@@ -278,121 +352,22 @@ const ActionsPart = ({
                       : advancement.needs_committee_approval &&
                         advancement.is_committee_approved === false
                       ? 'Advancement Rejected by Committee'
-                      : 'Mark as Paid Out'}
+                      : 'Process Finance Checklist'}
                   </button>
 
-                  {showReferenceNumberPart && (
-                    <div
-                      className='mt-3 p-4 rounded-3'
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.9)',
-                        border: '2px solid #3b82f6',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                  {/* Checklist Component */}
+                  {showChecklistPart && (
+                    <LoanChecklistComponent
+                      advancement={advancement}
+                      loanId={advancement.id}
+                      token={token}
+                      onChecklistComplete={() => {
+                        // When checklist is complete, show reference number form
+                        setShowChecklistPart(false);
+                        setShowReferenceNumberPart(true);
                       }}
-                    >
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          markAdvancementPaidOutHandler();
-                        }}
-                      >
-                        <div className='mb-3'>
-                          <label
-                            htmlFor='inputField'
-                            className='form-label fw-semibold'
-                            style={{ color: '#374151', fontSize: '0.95rem' }}
-                          >
-                            Pay Out Reference Number
-                          </label>
-                          <input
-                            type='text'
-                            id='inputField'
-                            className='form-control'
-                            value={payOutReferenceNumber}
-                            onChange={(e) =>
-                              setPayOutReferenceNumber(e.target.value)
-                            }
-                            placeholder='Enter reference number...'
-                            required
-                            style={{
-                              borderRadius: '8px',
-                              border: '2px solid #e5e7eb',
-                              padding: '10px 12px',
-                              fontSize: '0.9rem',
-                              background: '#f8fafc',
-                            }}
-                            onFocus={(e) => {
-                              e.target.style.borderColor = '#3b82f6';
-                              e.target.style.boxShadow =
-                                '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                            }}
-                            onBlur={(e) => {
-                              e.target.style.borderColor = '#e5e7eb';
-                              e.target.style.boxShadow = 'none';
-                            }}
-                          />
-                        </div>
-                        <div className='d-flex gap-2 justify-content-end'>
-                          <button
-                            type='button'
-                            className='btn d-flex align-items-center gap-2'
-                            style={{
-                              background:
-                                'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '8px',
-                              padding: '8px 16px',
-                              fontWeight: '500',
-                              fontSize: '0.9rem',
-                            }}
-                            onClick={() => setShowReferenceNumberPart(false)}
-                          >
-                            <svg
-                              width='14'
-                              height='14'
-                              fill='currentColor'
-                              viewBox='0 0 20 20'
-                            >
-                              <path
-                                fillRule='evenodd'
-                                d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
-                                clipRule='evenodd'
-                              />
-                            </svg>
-                            Cancel
-                          </button>
-                          <button
-                            type='submit'
-                            className='btn d-flex align-items-center gap-2'
-                            style={{
-                              background:
-                                'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '8px',
-                              padding: '8px 16px',
-                              fontWeight: '500',
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            <svg
-                              width='14'
-                              height='14'
-                              fill='currentColor'
-                              viewBox='0 0 20 20'
-                            >
-                              <path
-                                fillRule='evenodd'
-                                d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
-                                clipRule='evenodd'
-                              />
-                            </svg>
-                            Confirm Payout
-                          </button>
-                        </div>
-                      </form>
-                    </div>
+                      onCancel={() => setShowChecklistPart(false)}
+                    />
                   )}
                 </div>
               )}
