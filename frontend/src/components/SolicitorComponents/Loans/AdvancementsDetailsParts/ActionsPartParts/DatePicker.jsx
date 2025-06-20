@@ -421,7 +421,7 @@ const DatePicker = ({ value, onChange, placeholder, loanBookCreatedAt }) => {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;

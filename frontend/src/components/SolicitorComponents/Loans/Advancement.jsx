@@ -417,7 +417,7 @@ const Advancement = ({ loan }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .cursor-pointer {
           cursor: pointer;
         }
