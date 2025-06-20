@@ -70,7 +70,8 @@ const ActualAdvancementDetailPart = ({
                       style={{ color: '#1e40af', fontSize: '1.1rem' }}
                     >
                       {formatMoney(
-                        advancement.current_balance,
+                        advancement?.loanbook_data?.total_due ||
+                          advancement.current_balance,
                         advancement.currency_sign
                       )}
                     </span>
@@ -133,39 +134,24 @@ const ActualAdvancementDetailPart = ({
                       className='fw-semibold'
                       style={{ color: '#374151', fontSize: '0.9rem' }}
                     >
-                      Fee Agreed:
+                      Accrued Fee:
                     </span>
-                    {isEditing ? (
-                      <input
-                        type='text'
-                        className='form-control'
-                        name='fee_agreed'
-                        value={advancement.fee_agreed}
-                        onChange={handleInputChange}
-                        style={{
-                          maxWidth: '120px',
-                          background: 'rgba(254, 242, 242, 0.8)',
-                          border: '2px solid #fca5a5',
-                          borderRadius: '8px',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
-                        }}
-                      />
-                    ) : (
-                      <span
-                        className='fw-semibold'
-                        style={{
-                          color:
-                            advancement.fee_agreed > 0 ? '#d97706' : '#6b7280',
-                          fontSize: '1rem',
-                        }}
-                      >
-                        {formatMoney(
+
+                    <span
+                      className='fw-semibold'
+                      style={{
+                        color:
+                          advancement.fee_agreed > 0 ? '#d97706' : '#6b7280',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      {formatMoney(
+                        advancement?.loanbook_data?.total_due -
+                          advancement?.loanbook_data?.initial_amount ||
                           advancement.fee_agreed,
-                          advancement.currency_sign
-                        )}
-                      </span>
-                    )}
+                        advancement.currency_sign
+                      )}
+                    </span>
                   </div>
                 </div>
 
@@ -223,35 +209,13 @@ const ActualAdvancementDetailPart = ({
                     >
                       Term Agreed:
                     </span>
-                    {isEditing ? (
-                      <div className='d-flex align-items-center gap-2'>
-                        <input
-                          type='text'
-                          className='form-control'
-                          name='term_agreed'
-                          value={advancement.term_agreed}
-                          onChange={handleInputChange}
-                          style={{
-                            maxWidth: '80px',
-                            background: 'rgba(254, 242, 242, 0.8)',
-                            border: '2px solid #fca5a5',
-                            borderRadius: '8px',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                          }}
-                        />
-                        <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-                          months
-                        </span>
-                      </div>
-                    ) : (
-                      <span
-                        className='fw-semibold'
-                        style={{ color: '#374151', fontSize: '1rem' }}
-                      >
-                        {advancement.term_agreed} months
-                      </span>
-                    )}
+
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '1rem' }}
+                    >
+                      {advancement.term_agreed} months
+                    </span>
                   </div>
                 </div>
 
@@ -268,35 +232,19 @@ const ActualAdvancementDetailPart = ({
                       className='fw-semibold'
                       style={{ color: '#374151', fontSize: '0.9rem' }}
                     >
-                      Amount Agreed:
+                      Initial Amount:
                     </span>
-                    {isEditing ? (
-                      <input
-                        type='text'
-                        className='form-control'
-                        name='amount_agreed'
-                        value={advancement.amount_agreed}
-                        onChange={handleInputChange}
-                        style={{
-                          maxWidth: '120px',
-                          background: 'rgba(254, 242, 242, 0.8)',
-                          border: '2px solid #fca5a5',
-                          borderRadius: '8px',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
-                        }}
-                      />
-                    ) : (
-                      <span
-                        className='fw-semibold'
-                        style={{ color: '#374151', fontSize: '1rem' }}
-                      >
-                        {formatMoney(
+
+                    <span
+                      className='fw-semibold'
+                      style={{ color: '#374151', fontSize: '1rem' }}
+                    >
+                      {formatMoney(
+                        advancement?.loanbook_data?.initial_amount ||
                           advancement.amount_agreed,
-                          advancement.currency_sign
-                        )}
-                      </span>
-                    )}
+                        advancement.currency_sign
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -495,12 +443,36 @@ const ActualAdvancementDetailPart = ({
                 <div
                   className='p-3 rounded-3'
                   style={{
-                    background: advancement.maturity_date
-                      ? 'rgba(248, 250, 252, 0.8)'
-                      : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-                    border: advancement.maturity_date
-                      ? '1px solid #e2e8f0'
-                      : '1px solid #fca5a5',
+                    background: (() => {
+                      if (!advancement.maturity_date) {
+                        return 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
+                      }
+                      const today = new Date();
+                      const maturity = new Date(advancement.maturity_date);
+                      const diffDays = Math.ceil(
+                        (maturity - today) / (1000 * 60 * 60 * 24)
+                      );
+
+                      if (diffDays < 0)
+                        return 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'; // Past - danger
+                      if (diffDays <= 30)
+                        return 'linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)'; // <30 days - warning
+                      return 'rgba(248, 250, 252, 0.8)'; // >30 days - normal
+                    })(),
+                    border: (() => {
+                      if (!advancement.maturity_date) {
+                        return '1px solid #fca5a5';
+                      }
+                      const today = new Date();
+                      const maturity = new Date(advancement.maturity_date);
+                      const diffDays = Math.ceil(
+                        (maturity - today) / (1000 * 60 * 60 * 24)
+                      );
+
+                      if (diffDays < 0) return '2px solid #dc2626'; // Past - danger
+                      if (diffDays <= 30) return '2px solid #f59e0b'; // <30 days - warning
+                      return '1px solid #e2e8f0'; // >30 days - normal
+                    })(),
                   }}
                 >
                   <div className='d-flex align-items-center justify-content-between'>
