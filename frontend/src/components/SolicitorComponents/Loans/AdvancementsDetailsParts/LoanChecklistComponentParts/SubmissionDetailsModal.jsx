@@ -30,7 +30,7 @@ const SubmissionDetailsModal = ({ submission, checklistItems, onClose }) => {
   };
 
   const submissionItems = getSubmissionItems();
-
+  console.log('SUBMITION ITEM', submissionItems);
   return (
     <div
       className='position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center'

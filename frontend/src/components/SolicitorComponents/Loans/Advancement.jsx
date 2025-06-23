@@ -7,7 +7,7 @@ import {
 
 const Advancement = ({ loan }) => {
   const navigate = useNavigate();
-  console.log(loan);
+  console.log('ADVANCEMNT', loan);
 
   // Get styling based on status
   const getStatusStyles = () => {
@@ -349,7 +349,11 @@ const Advancement = ({ loan }) => {
                         }}
                       >
                         <strong>Balance:</strong>{' '}
-                        {formatMoney(loan.current_balance, loan.currency_sign)}
+                        {formatMoney(
+                          loan?.loanbook_data?.total_due ||
+                            loan.current_balance,
+                          loan.currency_sign
+                        )}
                       </td>
                     </tr>
                     <tr>
@@ -380,8 +384,13 @@ const Advancement = ({ loan }) => {
                           fontSize: '0.8rem',
                         }}
                       >
-                        <strong>Fee:</strong>{' '}
-                        {formatMoney(loan.fee_agreed, loan.currency_sign)}
+                        <strong>Accrued Fee:</strong>{' '}
+                        {formatMoney(
+                          loan?.loanbook_data?.total_due -
+                            loan?.loanbook_data?.initial_amount ||
+                            loan.fee_agreed,
+                          loan.currency_sign
+                        )}
                       </td>
                     </tr>
                     <tr>
@@ -393,7 +402,11 @@ const Advancement = ({ loan }) => {
                         }}
                       >
                         <strong>Amount:</strong>{' '}
-                        {formatMoney(loan.amount_agreed, loan.currency_sign)}
+                        {formatMoney(
+                          loan?.loanbook_data?.initial_amount ||
+                            loan.amount_agreed,
+                          loan.currency_sign
+                        )}
                       </td>
                     </tr>
                   </tbody>
@@ -404,7 +417,7 @@ const Advancement = ({ loan }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .cursor-pointer {
           cursor: pointer;
         }

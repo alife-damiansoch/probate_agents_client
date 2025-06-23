@@ -33,6 +33,8 @@ const AdvancementDetail = () => {
   const { id } = useParams();
   const user = useSelector((state) => state.user.user);
 
+  console.log('ADVANCEMENT', advancement);
+
   useEffect(() => {
     const fetchAdvancementDetail = async () => {
       if (token) {
@@ -534,7 +536,7 @@ const AdvancementDetail = () => {
               />
 
               {/* Edit Controls */}
-              <div className='d-flex justify-content-end gap-3 mt-4'>
+              {/* <div className='d-flex justify-content-end gap-3 mt-4'>
                 <button
                   className='btn d-flex align-items-center gap-2'
                   style={{
@@ -611,7 +613,7 @@ const AdvancementDetail = () => {
                     Cancel
                   </button>
                 )}
-              </div>
+              </div> */}
             </div>
 
             {/* Actions Part */}

@@ -125,7 +125,7 @@ const NotificationsWrapper = ({
         />
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideInDown {
           from {
             opacity: 0;
