@@ -1,419 +1,613 @@
-// DatePicker.jsx
-import { Calendar, Check, ChevronDown, X } from 'lucide-react';
+import { Calendar, Check, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const DatePicker = ({ value, onChange, placeholder, loanBookCreatedAt }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
-  const [selectedDay, setSelectedDay] = useState('');
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [hoveredDate, setHoveredDate] = useState(null);
 
-  // Calculate date ranges
-  const getDateRanges = () => {
-    if (!loanBookCreatedAt) return { years: [], months: [], days: [] };
+  // Parse min and max dates properly
+  const minDate = loanBookCreatedAt
+    ? (() => {
+        const parts = loanBookCreatedAt.split('T')[0].split('-');
+        return new Date(
+          parseInt(parts[0]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[2])
+        );
+      })()
+    : null;
 
-    const createdDate = new Date(loanBookCreatedAt);
-    const maxDate = new Date(createdDate);
-    maxDate.setMonth(createdDate.getMonth() + 36);
+  const maxDate = minDate
+    ? (() => {
+        const maxYear = minDate.getFullYear() + 3; // 36 months = 3 years
+        const maxMonth = minDate.getMonth();
+        const maxDay = minDate.getDate();
+        return new Date(maxYear, maxMonth, maxDay);
+      })()
+    : null;
 
-    const currentDate = new Date();
-    const startYear = createdDate.getFullYear();
-    const endYear = maxDate.getFullYear();
+  // Calculate yearly fixed rate transition date (exactly 1 year from creation)
+  const yearlyRateTransitionDate = minDate
+    ? (() => {
+        const transitionYear = minDate.getFullYear() + 1;
+        const transitionMonth = minDate.getMonth();
+        const transitionDay = minDate.getDate();
+        return new Date(transitionYear, transitionMonth, transitionDay);
+      })()
+    : null;
 
-    const years = [];
-    for (let year = startYear; year <= endYear; year++) {
-      years.push(year);
+  useEffect(() => {
+    if (value) {
+      // Parse the date string directly to avoid timezone issues
+      const parts = value.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1; // Month is 0-indexed
+        const day = parseInt(parts[2]);
+        const date = new Date(year, month, day);
+        setSelectedDate(date);
+        setCurrentMonth(date.getMonth());
+        setCurrentYear(date.getFullYear());
+      }
     }
+  }, [value]);
 
-    return { years, createdDate, maxDate };
-  };
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
 
-  const { years, createdDate, maxDate } = getDateRanges();
-
-  // Get available months for selected year
-  const getAvailableMonths = (year) => {
-    if (!year || !createdDate || !maxDate) return [];
-
-    const months = [];
-    const startMonth =
-      year === createdDate.getFullYear() ? createdDate.getMonth() : 0;
-    const endMonth = year === maxDate.getFullYear() ? maxDate.getMonth() : 11;
-
-    for (let month = startMonth; month <= endMonth; month++) {
-      months.push({
-        value: month,
-        name: new Date(year, month).toLocaleDateString('en-US', {
-          month: 'long',
-        }),
-      });
-    }
-
-    return months;
-  };
-
-  // Get available days for selected year/month
-  const getAvailableDays = (year, month) => {
-    if (!year || month === '' || !createdDate || !maxDate) return [];
+  const getDaysInMonth = (year, month) => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
 
     const days = [];
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    let startDay = 1;
-    let endDay = daysInMonth;
-
-    if (
-      year === createdDate.getFullYear() &&
-      month === createdDate.getMonth()
-    ) {
-      startDay = createdDate.getDate();
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      days.push(date);
     }
-
-    if (year === maxDate.getFullYear() && month === maxDate.getMonth()) {
-      endDay = maxDate.getDate();
-    }
-
-    for (let day = startDay; day <= endDay; day++) {
-      days.push(day);
-    }
-
     return days;
   };
 
-  // Handle date selection
-  const handleDateSelect = (year, month, day) => {
-    if (year && month !== '' && day) {
-      const date = new Date(year, month, day);
-      const dateString = date.toISOString().split('T')[0];
-      onChange(dateString);
-      setIsOpen(false);
-    }
+  const isDateInCurrentMonth = (date) => {
+    return (
+      date.getMonth() === currentMonth && date.getFullYear() === currentYear
+    );
   };
 
-  // Parse current value
-  useEffect(() => {
-    if (value) {
-      const date = new Date(value);
-      setSelectedYear(date.getFullYear());
-      setSelectedMonth(date.getMonth());
-      setSelectedDay(date.getDate());
+  const isDateDisabled = (date) => {
+    if (!minDate || !maxDate) return false;
+    return date < minDate || date > maxDate;
+  };
+
+  const isDateSelected = (date) => {
+    if (!selectedDate) return false;
+    return date.toDateString() === selectedDate.toDateString();
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isYearlyRateTransition = (date) => {
+    if (!yearlyRateTransitionDate) return false;
+    return date.toDateString() === yearlyRateTransitionDate.toDateString();
+  };
+
+  const handleDateSelect = (date) => {
+    if (isDateDisabled(date)) return;
+    setSelectedDate(date);
+    // Format date properly to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    onChange(dateString);
+    setIsOpen(false);
+  };
+
+  const handleQuickSelect = (date) => {
+    setSelectedDate(date);
+    setCurrentMonth(date.getMonth());
+    setCurrentYear(date.getFullYear());
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    onChange(dateString);
+    setIsOpen(false);
+  };
+
+  const navigateMonth = (direction) => {
+    if (direction === 'prev') {
+      if (currentMonth === 0) {
+        setCurrentMonth(11);
+        setCurrentYear(currentYear - 1);
+      } else {
+        setCurrentMonth(currentMonth - 1);
+      }
     } else {
-      setSelectedYear('');
-      setSelectedMonth('');
-      setSelectedDay('');
+      if (currentMonth === 11) {
+        setCurrentMonth(0);
+        setCurrentYear(currentYear + 1);
+      } else {
+        setCurrentMonth(currentMonth + 1);
+      }
     }
-  }, [value]);
+  };
 
   const formatDisplayDate = () => {
     if (value) {
       return new Date(value).toLocaleDateString('en-US', {
+        weekday: 'short',
         year: 'numeric',
-        month: 'long',
+        month: 'short',
         day: 'numeric',
       });
     }
     return placeholder || 'Select date';
   };
 
-  const availableMonths = getAvailableMonths(selectedYear);
-  const availableDays = getAvailableDays(selectedYear, selectedMonth);
-
   const clearSelection = () => {
-    setSelectedYear('');
-    setSelectedMonth('');
-    setSelectedDay('');
+    setSelectedDate(null);
     onChange('');
     setIsOpen(false);
   };
 
+  const days = getDaysInMonth(currentYear, currentMonth);
+
   return (
     <>
       <div className='position-relative'>
-        {/* Main Input Display */}
+        {/* Trigger Input */}
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className='form-control d-flex align-items-center justify-content-between'
+          className='d-flex align-items-center justify-content-between position-relative overflow-hidden'
           style={{
             padding: '16px 20px',
-            borderRadius: '12px',
-            border: '2px solid #e5e7eb',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background:
+              'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
+            backdropFilter: 'blur(20px)',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            fontSize: '1rem',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            fontSize: '15px',
             minHeight: '56px',
+            boxShadow:
+              '0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)',
           }}
           onMouseEnter={(e) => {
-            e.target.style.borderColor = '#667eea';
-            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow =
+              '0 8px 30px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)';
+            e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.borderColor = '#e5e7eb';
-            e.target.style.boxShadow = 'none';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow =
+              '0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
           }}
         >
           <div className='d-flex align-items-center gap-3'>
-            <Calendar size={20} className='text-muted' />
-            <span className={value ? 'text-dark fw-medium' : 'text-muted'}>
+            <div
+              className='d-flex align-items-center justify-content-center'
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+              }}
+            >
+              <Calendar size={16} className='text-white' />
+            </div>
+            <span className={`${value ? 'text-dark fw-medium' : 'text-muted'}`}>
               {formatDisplayDate()}
             </span>
           </div>
-          <ChevronDown
-            size={20}
-            className='text-muted'
+
+          <div
+            className='d-flex align-items-center justify-content-center'
             style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '6px',
+              background: 'rgba(0, 0, 0, 0.05)',
               transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
-          />
+          >
+            <ChevronLeft
+              size={14}
+              className='text-muted'
+              style={{ transform: 'rotate(-90deg)' }}
+            />
+          </div>
         </div>
 
-        {/* Show max date info */}
-        {maxDate && (
-          <div className='mt-2 small text-muted'>
-            <span>
-              Available until: <strong>{maxDate.toLocaleDateString()}</strong>{' '}
-              (36 months from loan creation)
-            </span>
+        {/* Date Range Info & Quick Select */}
+        {minDate && maxDate && yearlyRateTransitionDate && (
+          <div className='mt-3'>
+            <div
+              className='px-4 py-3 rounded-xl mb-2'
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                border: '1px solid rgba(99, 102, 241, 0.15)',
+              }}
+            >
+              <div className='small text-muted d-flex align-items-center justify-content-between'>
+                <span>
+                  Valid range: <strong>{minDate.toLocaleDateString()}</strong>
+                </span>
+                <span>
+                  to <strong>{maxDate.toLocaleDateString()}</strong>
+                </span>
+              </div>
+            </div>
+
+            {/* Yearly Rate Transition Quick Select */}
+            <div
+              onClick={() => handleQuickSelect(yearlyRateTransitionDate)}
+              className='px-4 py-3 rounded-xl position-relative overflow-hidden'
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%)',
+                border: '2px solid rgba(239, 68, 68, 0.2)',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform =
+                  'translateY(-1px) scale(1.02)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                e.currentTarget.style.boxShadow =
+                  '0 8px 25px rgba(239, 68, 68, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              {/* Animated background effect */}
+              <div
+                className='position-absolute top-0 start-0 w-100 h-100'
+                style={{
+                  background:
+                    'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%)',
+                  animation: 'shimmer 3s infinite',
+                  transform: 'translateX(-100%)',
+                }}
+              />
+
+              <div className='d-flex align-items-center justify-content-between position-relative'>
+                <div className='d-flex align-items-center gap-3'>
+                  <div
+                    className='d-flex align-items-center justify-content-center'
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '10px',
+                      background:
+                        'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+                    }}
+                  >
+                    <Calendar size={16} className='text-white' />
+                  </div>
+                  <div>
+                    <div
+                      className='fw-bold text-dark'
+                      style={{ fontSize: '14px' }}
+                    >
+                      Rate Transition Date
+                    </div>
+                    <div className='small text-danger fw-medium'>
+                      {yearlyRateTransitionDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className='d-flex align-items-center gap-2'>
+                  <span
+                    className='badge px-2 py-1 small fw-medium'
+                    style={{
+                      background:
+                        'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)',
+                      color: '#dc2626',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '6px',
+                    }}
+                  >
+                    Daily Interest Starts
+                  </span>
+                  <div
+                    className='d-flex align-items-center justify-content-center'
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '6px',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#dc2626',
+                    }}
+                  >
+                    <ChevronRight size={12} />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Fullscreen Modal Overlay */}
+      {/* Modal Overlay */}
       {isOpen && (
         <div
           className='position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center'
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            backdropFilter: 'blur(12px)',
-            zIndex: 99999, // Much higher z-index to be above everything
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(20px)',
+            zIndex: 99999,
             animation: 'fadeIn 0.3s ease',
           }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(false);
-          }}
+          onClick={() => setIsOpen(false)}
         >
           <div
-            className='bg-white rounded-4 shadow-lg p-0 m-3'
+            className='bg-white shadow-lg m-3'
             style={{
-              maxWidth: '420px',
+              borderRadius: '24px',
+              maxWidth: '380px',
               width: '100%',
               maxHeight: '90vh',
               overflowY: 'auto',
               animation: 'slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              boxShadow:
+                '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div
-              className='p-4 border-bottom'
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '1rem 1rem 0 0',
-              }}
-            >
-              <div className='d-flex align-items-center justify-content-between'>
-                <div className='d-flex align-items-center gap-3'>
-                  <div
-                    className='bg-white bg-opacity-20 rounded-3 p-2'
-                    style={{ backdropFilter: 'blur(10px)' }}
-                  >
-                    <Calendar size={20} className='text-white' />
-                  </div>
-                  <div>
-                    <h5 className='text-white fw-bold mb-0'>Select Date</h5>
-                    <p className='text-white opacity-75 mb-0 small'>
-                      Choose your statement date
-                    </p>
-                  </div>
-                </div>
+            <div className='p-5 text-center'>
+              <div
+                className='d-inline-flex align-items-center justify-content-center mb-3'
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '20px',
+                  background:
+                    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  boxShadow: '0 8px 25px rgba(99, 102, 241, 0.4)',
+                }}
+              >
+                <Calendar size={28} className='text-white' />
+              </div>
+              <h4 className='fw-bold text-dark mb-1'>Select Date</h4>
+              <p className='text-muted mb-0 small'>
+                Choose your statement date
+              </p>
+            </div>
+
+            {/* Calendar Navigation */}
+            <div className='px-5 pb-3'>
+              <div className='d-flex align-items-center justify-content-between mb-4'>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsOpen(false);
-                  }}
-                  className='btn btn-sm bg-white bg-opacity-20 border-0 text-white rounded-3'
+                  onClick={() => navigateMonth('prev')}
+                  className='btn btn-sm d-flex align-items-center justify-content-center p-0'
                   style={{
-                    backdropFilter: 'blur(10px)',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    color: '#6366f1',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                    e.target.style.background = 'rgba(99, 102, 241, 0.2)';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                    e.target.style.background = 'rgba(99, 102, 241, 0.1)';
                   }}
                 >
-                  <X size={18} />
+                  <ChevronLeft size={16} />
+                </button>
+
+                <div className='text-center'>
+                  <h5 className='fw-bold text-dark mb-0'>
+                    {monthNames[currentMonth]} {currentYear}
+                  </h5>
+                </div>
+
+                <button
+                  onClick={() => navigateMonth('next')}
+                  className='btn btn-sm d-flex align-items-center justify-content-center p-0'
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    color: '#6366f1',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(99, 102, 241, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(99, 102, 241, 0.1)';
+                  }}
+                >
+                  <ChevronRight size={16} />
                 </button>
               </div>
-            </div>
 
-            {/* Content */}
-            <div className='p-4'>
-              {/* Year Selection */}
-              <div className='mb-4'>
-                <label className='form-label fw-semibold text-dark mb-2'>
-                  Year
-                </label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => {
-                    setSelectedYear(parseInt(e.target.value));
-                    setSelectedMonth('');
-                    setSelectedDay('');
-                  }}
-                  className='form-select'
-                  style={{
-                    borderRadius: '10px',
-                    border: '2px solid #e5e7eb',
-                    padding: '12px 16px',
-                    fontSize: '1rem',
-                    background:
-                      'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
-                  }}
-                >
-                  <option value=''>Select Year</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
+              {/* Day Headers */}
+              <div className='row g-1 mb-2'>
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                  <div key={day} className='col text-center'>
+                    <div className='small text-muted fw-medium py-2'>{day}</div>
+                  </div>
+                ))}
               </div>
 
-              {/* Month Selection */}
-              <div className='mb-4'>
-                <label className='form-label fw-semibold text-dark mb-2'>
-                  Month
-                </label>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => {
-                    setSelectedMonth(parseInt(e.target.value));
-                    setSelectedDay('');
-                  }}
-                  disabled={!selectedYear}
-                  className='form-select'
-                  style={{
-                    borderRadius: '10px',
-                    border: '2px solid #e5e7eb',
-                    padding: '12px 16px',
-                    fontSize: '1rem',
-                    background:
-                      'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
-                    opacity: selectedYear ? 1 : 0.6,
-                  }}
-                >
-                  <option value=''>Select Month</option>
-                  {availableMonths.map((month) => (
-                    <option key={month.value} value={month.value}>
-                      {month.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Calendar Grid */}
+              <div className='row g-1'>
+                {days.map((date, index) => {
+                  const isCurrentMonth = isDateInCurrentMonth(date);
+                  const isDisabled = isDateDisabled(date);
+                  const isSelected = isDateSelected(date);
+                  const isTodayDate = isToday(date);
+                  const isTransitionDate = isYearlyRateTransition(date);
+                  const isHovered =
+                    hoveredDate &&
+                    date.toDateString() === hoveredDate.toDateString();
 
-              {/* Day Selection */}
-              <div className='mb-4'>
-                <label className='form-label fw-semibold text-dark mb-2'>
-                  Day
-                </label>
-                <div
-                  className='border rounded-3 p-3'
-                  style={{
-                    background:
-                      'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                    maxHeight: '180px',
-                    overflowY: 'auto',
-                  }}
-                >
-                  {availableDays.length > 0 ? (
-                    <div className='row g-2'>
-                      {availableDays.map((day) => (
-                        <div key={day} className='col-3'>
-                          <button
-                            onClick={() => setSelectedDay(day)}
-                            className={`btn w-100 ${
-                              selectedDay === day
-                                ? 'btn-primary'
-                                : 'btn-outline-secondary'
-                            }`}
+                  return (
+                    <div key={index} className='col'>
+                      <button
+                        onClick={() => handleDateSelect(date)}
+                        onMouseEnter={() => setHoveredDate(date)}
+                        onMouseLeave={() => setHoveredDate(null)}
+                        disabled={isDisabled}
+                        className='btn w-100 d-flex align-items-center justify-content-center p-0'
+                        style={{
+                          height: '40px',
+                          borderRadius: '12px',
+                          border:
+                            isTransitionDate && !isSelected
+                              ? '2px solid #ef4444'
+                              : 'none',
+                          fontSize: '14px',
+                          fontWeight:
+                            isSelected || isTransitionDate ? '600' : '500',
+                          color: isDisabled
+                            ? '#d1d5db'
+                            : isSelected
+                            ? 'white'
+                            : isTransitionDate
+                            ? '#ef4444'
+                            : isCurrentMonth
+                            ? '#374151'
+                            : '#9ca3af',
+                          background: isSelected
+                            ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                            : isTransitionDate && !isSelected
+                            ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%)'
+                            : isHovered && !isDisabled
+                            ? 'rgba(99, 102, 241, 0.1)'
+                            : isTodayDate && isCurrentMonth
+                            ? 'rgba(99, 102, 241, 0.05)'
+                            : 'transparent',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease',
+                          transform:
+                            isSelected || isTransitionDate
+                              ? 'scale(1.05)'
+                              : 'scale(1)',
+                          boxShadow: isSelected
+                            ? '0 4px 12px rgba(99, 102, 241, 0.4)'
+                            : isTransitionDate && !isSelected
+                            ? '0 2px 8px rgba(239, 68, 68, 0.2)'
+                            : 'none',
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {/* Transition date pulse effect */}
+                        {isTransitionDate && !isSelected && (
+                          <div
+                            className='position-absolute top-0 start-0 w-100 h-100'
                             style={{
-                              borderRadius: '8px',
-                              padding: '8px',
-                              fontSize: '0.9rem',
                               background:
-                                selectedDay === day
-                                  ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                                  : 'white',
-                              border:
-                                selectedDay === day
-                                  ? 'none'
-                                  : '1px solid #dee2e6',
+                                'linear-gradient(45deg, transparent 30%, rgba(239, 68, 68, 0.1) 50%, transparent 70%)',
+                              animation: 'pulse 2s infinite',
                             }}
-                          >
-                            {day}
-                          </button>
-                        </div>
-                      ))}
+                          />
+                        )}
+                        <span className='position-relative'>
+                          {date.getDate()}
+                        </span>
+                      </button>
                     </div>
-                  ) : (
-                    <p className='text-muted text-center mb-0'>
-                      {!selectedYear
-                        ? 'Select a year first'
-                        : 'Select a month first'}
-                    </p>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Footer */}
-            <div className='p-4 border-top' style={{ background: '#f8fafc' }}>
+            <div className='p-5 pt-3'>
               <div className='d-flex gap-3'>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearSelection();
-                  }}
-                  className='btn btn-outline-secondary flex-fill'
+                  onClick={clearSelection}
+                  className='btn flex-fill d-flex align-items-center justify-content-center gap-2'
                   style={{
-                    borderRadius: '10px',
-                    padding: '12px',
-                    fontWeight: '500',
+                    borderRadius: '16px',
+                    padding: '14px',
+                    fontWeight: '600',
+                    border: '1px solid #e5e7eb',
+                    background: 'white',
+                    color: '#6b7280',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.background = '#f9fafb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = '#e5e7eb';
+                    e.target.style.background = 'white';
                   }}
                 >
-                  <X size={16} className='me-2' />
+                  <X size={16} />
                   Clear
                 </button>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDateSelect(selectedYear, selectedMonth, selectedDay);
-                  }}
-                  disabled={
-                    !selectedYear || selectedMonth === '' || !selectedDay
-                  }
-                  className='btn flex-fill'
+                  onClick={() => setIsOpen(false)}
+                  disabled={!selectedDate}
+                  className='btn flex-fill d-flex align-items-center justify-content-center gap-2'
                   style={{
-                    background:
-                      selectedYear && selectedMonth !== '' && selectedDay
-                        ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                        : '#e9ecef',
-                    color: 'white',
+                    background: selectedDate
+                      ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                      : '#f3f4f6',
+                    color: selectedDate ? 'white' : '#9ca3af',
                     border: 'none',
-                    borderRadius: '10px',
-                    padding: '12px',
+                    borderRadius: '16px',
+                    padding: '14px',
                     fontWeight: '600',
-                    cursor:
-                      selectedYear && selectedMonth !== '' && selectedDay
-                        ? 'pointer'
-                        : 'not-allowed',
+                    cursor: selectedDate ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s ease',
+                    boxShadow: selectedDate
+                      ? '0 4px 12px rgba(99, 102, 241, 0.3)'
+                      : 'none',
                   }}
                 >
-                  <Check size={16} className='me-2' />
-                  Confirm Date
+                  <Check size={16} />
+                  Confirm
                 </button>
               </div>
             </div>
@@ -423,23 +617,29 @@ const DatePicker = ({ value, onChange, placeholder, loanBookCreatedAt }) => {
 
       <style>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         @keyframes slideUp {
           from {
             opacity: 0;
-            transform: scale(0.9) translateY(20px);
+            transform: scale(0.95) translateY(20px);
           }
           to {
             opacity: 1;
             transform: scale(1) translateY(0);
           }
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
     </>
