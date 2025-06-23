@@ -226,117 +226,6 @@ const ActionsPart = ({
                   Settle Advancement
                 </button>
               </div>
-
-              {/* Statement Button - Full Width, Premium Styling */}
-              {advancement.pay_out_reference_number && (
-                <div className='mb-3'>
-                  <button
-                    className='btn w-100 d-flex align-items-center justify-content-center gap-3'
-                    style={{
-                      background:
-                        'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                      color: '#ffffff',
-                      border: '2px solid transparent',
-                      borderRadius: '16px',
-                      padding: '16px 24px',
-                      fontWeight: '600',
-                      fontSize: '1.05rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      boxShadow: '0 8px 32px rgba(30, 41, 59, 0.12)',
-                    }}
-                    onClick={() => setShowStatementModal(true)}
-                    onMouseEnter={(e) => {
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow =
-                        '0 16px 40px rgba(30, 41, 59, 0.2)';
-                      e.target.style.borderColor = '#64748b';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow =
-                        '0 8px 32px rgba(30, 41, 59, 0.12)';
-                      e.target.style.borderColor = 'transparent';
-                    }}
-                  >
-                    {/* Gradient overlay on hover */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background:
-                          'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                        opacity: 0,
-                        transition: 'opacity 0.3s ease',
-                        pointerEvents: 'none',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.opacity = 1;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.opacity = 0;
-                      }}
-                    />
-
-                    <div
-                      className='d-flex align-items-center gap-3'
-                      style={{ position: 'relative', zIndex: 1 }}
-                    >
-                      <div
-                        style={{
-                          background:
-                            'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                          borderRadius: '12px',
-                          padding: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <FileText size={20} />
-                      </div>
-                      <div className='text-start'>
-                        <div style={{ fontSize: '1.05rem', fontWeight: '600' }}>
-                          Generate Loan Statement
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '0.85rem',
-                            opacity: 0.8,
-                            fontWeight: '400',
-                          }}
-                        >
-                          View detailed interest calculations and payment
-                          history
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ position: 'relative', zIndex: 1 }}>
-                      <svg
-                        width='20'
-                        height='20'
-                        fill='none'
-                        stroke='currentColor'
-                        strokeWidth='2'
-                        viewBox='0 0 24 24'
-                        style={{ opacity: 0.7 }}
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          d='M9 5l7 7-7 7'
-                        />
-                      </svg>
-                    </div>
-                  </button>
-                </div>
-              )}
             </>
           ) : (
             <div
@@ -373,6 +262,117 @@ const ActionsPart = ({
               >
                 Action buttons are not available for settled advancements
               </p>
+            </div>
+          )}
+
+          {/* GENERATE STATEMENT BUTTON */}
+          {/* Statement Button - Full Width, Premium Styling */}
+          {advancement.pay_out_reference_number && (
+            <div className='my-3'>
+              <button
+                className='btn w-100 d-flex align-items-center justify-content-center gap-3'
+                style={{
+                  background:
+                    'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                  color: '#ffffff',
+                  border: '2px solid transparent',
+                  borderRadius: '16px',
+                  padding: '16px 24px',
+                  fontWeight: '600',
+                  fontSize: '1.05rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 8px 32px rgba(30, 41, 59, 0.12)',
+                }}
+                onClick={() => setShowStatementModal(true)}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow =
+                    '0 16px 40px rgba(30, 41, 59, 0.2)';
+                  e.target.style.borderColor = '#64748b';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow =
+                    '0 8px 32px rgba(30, 41, 59, 0.12)';
+                  e.target.style.borderColor = 'transparent';
+                }}
+              >
+                {/* Gradient overlay on hover */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background:
+                      'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease',
+                    pointerEvents: 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.opacity = 1;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.opacity = 0;
+                  }}
+                />
+
+                <div
+                  className='d-flex align-items-center gap-3'
+                  style={{ position: 'relative', zIndex: 1 }}
+                >
+                  <div
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                      borderRadius: '12px',
+                      padding: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <FileText size={20} />
+                  </div>
+                  <div className='text-start'>
+                    <div style={{ fontSize: '1.05rem', fontWeight: '600' }}>
+                      Generate Advancement Statement
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.85rem',
+                        opacity: 0.8,
+                        fontWeight: '400',
+                      }}
+                    >
+                      View detailed interest calculations and payment history
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <svg
+                    width='20'
+                    height='20'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    viewBox='0 0 24 24'
+                    style={{ opacity: 0.7 }}
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      d='M9 5l7 7-7 7'
+                    />
+                  </svg>
+                </div>
+              </button>
             </div>
           )}
 

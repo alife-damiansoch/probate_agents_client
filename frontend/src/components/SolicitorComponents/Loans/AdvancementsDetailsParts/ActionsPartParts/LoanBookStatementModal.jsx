@@ -138,12 +138,14 @@ const LoanBookStatementModal = ({ isOpen, onClose, advancement, token }) => {
                 <FileText size={24} color='white' />
               </div>
               <div>
-                <h4 className='mb-1 text-white fw-bold'>Loan Statement</h4>
+                <h4 className='mb-1 text-white fw-bold'>
+                  Advancement Statement
+                </h4>
                 <p
                   className='mb-0 text-white'
                   style={{ opacity: 0.9, fontSize: '0.9rem' }}
                 >
-                  Loan #{advancement?.id}
+                  Advancement #{advancement?.id}
                 </p>
               </div>
             </div>
@@ -161,7 +163,7 @@ const LoanBookStatementModal = ({ isOpen, onClose, advancement, token }) => {
                 e.target.style.transform = 'scale(1)';
               }}
             >
-              <X size={20} />
+              <X size={20} color={'black'} />
             </button>
           </div>
         </div>
@@ -222,7 +224,7 @@ const LoanBookStatementModal = ({ isOpen, onClose, advancement, token }) => {
                   {loanBookData?.created_at && (
                     <div className='mt-1'>
                       <span>
-                        Loan paid out:{' '}
+                        Advancement paid out:{' '}
                         {new Date(loanBookData.created_at).toLocaleDateString()}
                       </span>
                     </div>

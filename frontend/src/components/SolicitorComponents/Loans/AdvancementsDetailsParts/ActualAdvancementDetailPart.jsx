@@ -146,7 +146,8 @@ const ActualAdvancementDetailPart = ({
                       }}
                     >
                       {formatMoney(
-                        advancement?.loanbook_data?.total_due -
+                        advancement?.loanbook_data?.total_due +
+                          advancement?.amount_paid -
                           advancement?.loanbook_data?.initial_amount ||
                           advancement.fee_agreed,
                         advancement.currency_sign

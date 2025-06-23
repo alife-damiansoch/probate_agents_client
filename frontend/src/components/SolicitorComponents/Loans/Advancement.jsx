@@ -7,7 +7,7 @@ import {
 
 const Advancement = ({ loan }) => {
   const navigate = useNavigate();
-  console.log('ADVANCEMNT', loan);
+  console.log('ADVANCEMNT IN LIST', loan);
 
   // Get styling based on status
   const getStatusStyles = () => {
@@ -386,7 +386,8 @@ const Advancement = ({ loan }) => {
                       >
                         <strong>Accrued Fee:</strong>{' '}
                         {formatMoney(
-                          loan?.loanbook_data?.total_due -
+                          loan?.loanbook_data?.total_due +
+                            loan?.amount_paid -
                             loan?.loanbook_data?.initial_amount ||
                             loan.fee_agreed,
                           loan.currency_sign
@@ -401,7 +402,7 @@ const Advancement = ({ loan }) => {
                           fontSize: '0.8rem',
                         }}
                       >
-                        <strong>Amount:</strong>{' '}
+                        <strong>Advancement principal:</strong>{' '}
                         {formatMoney(
                           loan?.loanbook_data?.initial_amount ||
                             loan.amount_agreed,
