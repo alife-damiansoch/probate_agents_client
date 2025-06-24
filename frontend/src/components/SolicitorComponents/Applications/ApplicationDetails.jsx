@@ -18,6 +18,7 @@ import RejectionForm from '../ApplicationDetailsParts/RejectionForm';
 import RequiredDetailsPart from '../ApplicationDetailsParts/RequiredDetailsPart';
 import SolicitorPart from '../ApplicationDetailsParts/SolicitorPart';
 import ApplicationDetailStages from './ApplicationDetailStages';
+import EmailCommunicationsComponent from './EmailEssentialDocsComponents/EmailCommunicationsComponent.jsx';
 import InternalFilesManager from './InternalFilesComponents/InternalFilesManager.jsx';
 import SimpleDisabledButton from './SimpleDisabledButton.jsx';
 
@@ -174,6 +175,8 @@ const ApplicationDetails = () => {
   };
 
   const statusTheme = getStatusTheme();
+
+  console.log('APPLICATION', application);
 
   return (
     <>
@@ -584,6 +587,11 @@ const ApplicationDetails = () => {
         refresh={refresh}
         setRefresh={setRefresh}
         user={user}
+      />
+      <EmailCommunicationsComponent
+        applicationId={application.id}
+        token='token'
+        application={application}
       />
     </>
   );
