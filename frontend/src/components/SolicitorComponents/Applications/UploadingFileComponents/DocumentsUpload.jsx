@@ -67,6 +67,7 @@ const DocumentsUpload = ({
         try {
           const endpoint = `/api/applications/agent_applications/document_file/${applicationId}/`;
           const response = await fetchData(token, endpoint);
+          console.log('DOCUMENTS FETCHED', response.data);
           setDocuments(response.data);
         } catch (error) {
           console.error('Error fetching documents:', error);
@@ -261,6 +262,36 @@ const DocumentsUpload = ({
       text: 'Pending Upload',
       icon: 'pending',
     };
+  };
+
+  // Helper function to format email recipients for display
+  const formatEmailRecipients = (recipients) => {
+    if (!recipients || recipients.length === 0) return 'No recipients';
+    if (recipients.length === 1) return recipients[0];
+    if (recipients.length === 2) return `${recipients[0]} and ${recipients[1]}`;
+    return `${recipients[0]} and ${recipients.length - 1} other${
+      recipients.length > 2 ? 's' : ''
+    }`;
+  };
+
+  // Helper function to format email date
+  const formatEmailDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.abs(now - date) / (1000 * 60 * 60);
+
+    if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+      });
+    }
   };
 
   // Tooltip logic for specific document
@@ -545,6 +576,46 @@ const DocumentsUpload = ({
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
+                  {/* Email Status Badge - Floating */}
+                  {doc.is_emailed && (
+                    <div
+                      className='position-absolute d-flex align-items-center gap-1 px-2 py-1 rounded-pill'
+                      style={{
+                        top: '-8px',
+                        right: '12px',
+                        background:
+                          'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                        border: '2px solid white',
+                        zIndex: 10,
+                      }}
+                    >
+                      <svg
+                        width='10'
+                        height='10'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                        style={{
+                          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))',
+                        }}
+                      >
+                        <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
+                        <path d='m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
+                      </svg>
+                      <span
+                        style={{
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        SENT
+                      </span>
+                    </div>
+                  )}
+
                   {/* Document Header */}
                   <div className='d-flex align-items-center gap-3 mb-2'>
                     <div
@@ -643,8 +714,94 @@ const DocumentsUpload = ({
                     </span>
                   </div>
 
+                  {/* Email Information Section */}
+                  {doc.is_emailed && (
+                    <div
+                      className='mt-3 p-2 rounded-2'
+                      style={{
+                        background:
+                          'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.12) 100%)',
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                      }}
+                    >
+                      <div className='d-flex align-items-center gap-2 mb-1'>
+                        <div
+                          className='d-flex align-items-center justify-content-center rounded-1'
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            background:
+                              'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                          }}
+                        >
+                          <svg
+                            width='8'
+                            height='8'
+                            fill='currentColor'
+                            viewBox='0 0 20 20'
+                          >
+                            <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
+                            <path d='m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
+                          </svg>
+                        </div>
+                        <span
+                          className='fw-semibold'
+                          style={{
+                            color: '#059669',
+                            fontSize: '0.7rem',
+                          }}
+                        >
+                          Email Delivery
+                        </span>
+                        {doc.email_count > 1 && (
+                          <span
+                            className='px-1 rounded-1'
+                            style={{
+                              backgroundColor: '#10b981',
+                              color: 'white',
+                              fontSize: '0.6rem',
+                              fontWeight: '700',
+                              minWidth: '16px',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {doc.email_count}
+                          </span>
+                        )}
+                      </div>
+                      <div className='d-flex align-items-center justify-content-between'>
+                        <div
+                          className='text-truncate'
+                          style={{
+                            color: '#047857',
+                            fontSize: '0.65rem',
+                            maxWidth: '200px',
+                          }}
+                        >
+                          <span className='fw-medium'>To:</span>{' '}
+                          {formatEmailRecipients(doc.emailed_to_recipients)}
+                        </div>
+                        {doc.last_emailed_date && (
+                          <span
+                            className='px-2 py-1 rounded-pill'
+                            style={{
+                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                              color: '#047857',
+                              fontSize: '0.6rem',
+                              fontWeight: '600',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {formatEmailDate(doc.last_emailed_date)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Meta Information */}
-                  <div className='d-flex align-items-center justify-content-between'>
+                  <div className='d-flex align-items-center justify-content-between mt-3'>
                     <div className='d-flex gap-2'>
                       {doc.created_at && (
                         <span
@@ -778,34 +935,6 @@ const DocumentsUpload = ({
             No documents have been uploaded for this application yet. Get
             started by uploading your first document.
           </p>
-          {/*<button*/}
-          {/*  className='btn px-5 py-3 fw-semibold rounded-4 d-inline-flex align-items-center gap-3'*/}
-          {/*  style={{*/}
-          {/*    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',*/}
-          {/*    color: 'white',*/}
-          {/*    border: 'none',*/}
-          {/*    fontSize: '0.95rem',*/}
-          {/*    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',*/}
-          {/*  }}*/}
-          {/*  onClick={() => navigate(`/upload_new_document/${applicationId}`)}*/}
-          {/*  onMouseEnter={(e) => {*/}
-          {/*    e.target.style.transform = 'translateY(-2px)';*/}
-          {/*    e.target.style.boxShadow = '0 12px 24px rgba(245, 158, 11, 0.4)';*/}
-          {/*  }}*/}
-          {/*  onMouseLeave={(e) => {*/}
-          {/*    e.target.style.transform = 'translateY(0)';*/}
-          {/*    e.target.style.boxShadow = 'none';*/}
-          {/*  }}*/}
-          {/*>*/}
-          {/*  <svg width='20' height='20' fill='currentColor' viewBox='0 0 20 20'>*/}
-          {/*    <path*/}
-          {/*      fillRule='evenodd'*/}
-          {/*      d='M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z'*/}
-          {/*      clipRule='evenodd'*/}
-          {/*    />*/}
-          {/*  </svg>*/}
-          {/*  Upload First Document*/}
-          {/*</button>*/}
         </div>
       )}
 
