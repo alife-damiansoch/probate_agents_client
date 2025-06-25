@@ -174,7 +174,8 @@ const ActionsPart = ({
                   onClick={() => {
                     navigate(`/extentions/${advancement.id}`);
                   }}
-                  disabled={advancement.pay_out_reference_number === null}
+                  // disabled={advancement.pay_out_reference_number === null}
+                  disabled
                 >
                   <svg
                     width='16'

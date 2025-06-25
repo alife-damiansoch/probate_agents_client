@@ -13,6 +13,8 @@ import {
 import renderErrors from '../../../GenericFunctions/HelperGenericFunctions.jsx';
 import ManageDocumentsButton from './ManageDocumentsButton.jsx';
 import ManageDocumentsModal from './ManageDocumentsModal.jsx';
+import SolicitorNotificationButton from './SolicitorNotificationButton.jsx';
+import SolicitorNotificationModal from './SolicitorNotificationModal.jsx';
 
 const DocumentsUpload = ({
   applicationId,
@@ -26,12 +28,16 @@ const DocumentsUpload = ({
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
 
-  // Document requirements state (moved from modal)
+  // Document requirements state
   const [availableDocumentTypes, setAvailableDocumentTypes] = useState([]);
-
   const [loadingRequirements, setLoadingRequirements] = useState(false);
+
+  // Solicitor notification modal state
+  const [showSolicitorModal, setShowSolicitorModal] = useState(false);
+  const [triggerEmailSend, setTriggerEmailSend] = useState(false);
 
   // Tooltip state
   const [tooltipContent, setTooltipContent] = useState('');
@@ -59,6 +65,16 @@ const DocumentsUpload = ({
 
   const navigate = useNavigate();
 
+  // Auto-hide success message after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
   // Fetch documents
   React.useEffect(() => {
     setLoading(true);
@@ -80,17 +96,15 @@ const DocumentsUpload = ({
     fetchDocuments();
   }, [applicationId, token, refresh]);
 
-  // Fetch document requirements and types (moved from modal)
+  // Fetch document requirements and types
   useEffect(() => {
     const fetchDocumentData = async () => {
       if (token && applicationId) {
         setLoadingRequirements(true);
         try {
-          // Fetch available document types
           const typesResponse = await fetchData(token, '/api/document-types/');
           setAvailableDocumentTypes(typesResponse.data);
 
-          // Fetch current requirements for this application
           const requirementsResponse = await fetchData(
             token,
             `/api/applications/${applicationId}/document-requirements/`
@@ -171,14 +185,50 @@ const DocumentsUpload = ({
     setIsManageModalOpen(false);
   };
 
-  // Helper function to get document type
+  // Solicitor notification functions
+  const handleNotificationSuccess = (data) => {
+    console.log('Email notification sent successfully:', data);
+    setErrorMessage(null);
+    setSuccessMessage([
+      {
+        message: `Email notification sent successfully to ${data.solicitor_email}! The solicitor has been informed about the new documents for application #${data.application_id}.`,
+      },
+    ]);
+  };
+
+  const handleNotificationError = (error) => {
+    console.error('Failed to send email notification:', error);
+    setErrorMessage([
+      { message: `Failed to send email notification: ${error}` },
+    ]);
+    setSuccessMessage(null);
+  };
+
+  const handleShowSolicitorModal = () => {
+    setShowSolicitorModal(true);
+  };
+
+  const handleCloseSolicitorModal = () => {
+    setShowSolicitorModal(false);
+    setTriggerEmailSend(false);
+  };
+
+  const handleConfirmSolicitorNotification = () => {
+    setShowSolicitorModal(false);
+    setTriggerEmailSend(true);
+  };
+
+  const handleSendComplete = () => {
+    setTriggerEmailSend(false);
+  };
+
+  // Helper functions
   const getDocumentType = (doc) => {
     if (doc.is_undertaking) return 'Solicitor Undertaking';
     if (doc.is_loan_agreement) return 'Advancement Agreement';
     return 'Document';
   };
 
-  // Helper function to get document type styling
   const getDocumentTypeStyle = (doc) => {
     if (doc.is_undertaking) {
       return {
@@ -204,16 +254,13 @@ const DocumentsUpload = ({
     };
   };
 
-  // Helper function to get signer display name
   const getSignerDisplayName = (whoNeedsToSign) => {
     if (whoNeedsToSign === 'solicitor') return 'Solicitor';
     if (whoNeedsToSign === 'applicant') return 'Applicant';
     return 'Unknown';
   };
 
-  // Helper function to get signature status details
   const getSignatureStatusStyle = (doc) => {
-    // Priority: If document is signed, show that first
     if (doc.is_signed) {
       return {
         backgroundColor: '#10b981',
@@ -223,7 +270,6 @@ const DocumentsUpload = ({
       };
     }
 
-    // If signature is required but not signed
     if (doc.signature_required) {
       return {
         backgroundColor: '#f59e0b',
@@ -233,7 +279,6 @@ const DocumentsUpload = ({
       };
     }
 
-    // No signature required
     return {
       backgroundColor: '#6b7280',
       textColor: 'white',
@@ -242,7 +287,6 @@ const DocumentsUpload = ({
     };
   };
 
-  // Helper function to get requirement status styling
   const getRequirementStatusStyle = (requirement) => {
     if (requirement.is_uploaded) {
       return {
@@ -264,7 +308,6 @@ const DocumentsUpload = ({
     };
   };
 
-  // Helper function to format email recipients for display
   const formatEmailRecipients = (recipients) => {
     if (!recipients || recipients.length === 0) return 'No recipients';
     if (recipients.length === 1) return recipients[0];
@@ -274,7 +317,6 @@ const DocumentsUpload = ({
     }`;
   };
 
-  // Helper function to format email date
   const formatEmailDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -294,7 +336,7 @@ const DocumentsUpload = ({
     }
   };
 
-  // Tooltip logic for specific document
+  // Tooltip logic
   const handleMouseEnter = async (e, doc) => {
     if (doc.is_signed) {
       setCurrentHoveredDocId(doc.id);
@@ -392,6 +434,43 @@ const DocumentsUpload = ({
         </div>
       </div>
 
+      {/* Success Messages */}
+      {successMessage && (
+        <div
+          className='mb-4 p-4 rounded-3 d-flex align-items-center gap-3'
+          style={{
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+          }}
+        >
+          <div
+            className='d-flex align-items-center justify-content-center rounded-2'
+            style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: '#16a34a',
+              color: 'white',
+            }}
+          >
+            <svg width='20' height='20' fill='currentColor' viewBox='0 0 20 20'>
+              <path
+                fillRule='evenodd'
+                d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                clipRule='evenodd'
+              />
+            </svg>
+          </div>
+          <div>
+            <h6 className='mb-1 fw-bold' style={{ color: '#16a34a' }}>
+              Success!
+            </h6>
+            <div style={{ color: '#16a34a', fontSize: '0.875rem' }}>
+              {renderErrors(successMessage)}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Error Messages */}
       {errorMessage && (
         <div
@@ -429,7 +508,7 @@ const DocumentsUpload = ({
         </div>
       )}
 
-      {/* Document Requirements Section - Compact */}
+      {/* Document Requirements Section */}
       {!loadingRequirements && currentRequirements.length > 0 && (
         <div className='mb-4'>
           <div
@@ -531,7 +610,7 @@ const DocumentsUpload = ({
         </div>
       )}
 
-      {/* Uploaded Documents Section - Compact */}
+      {/* Uploaded Documents Section */}
       <div
         className='px-3 py-2 mb-3 rounded-3'
         style={{
@@ -551,7 +630,7 @@ const DocumentsUpload = ({
         </h6>
       </div>
 
-      {/* Documents List - Condensed */}
+      {/* Documents List */}
       {documents.length > 0 ? (
         <div className='row g-2'>
           {documents.map((doc) => {
@@ -576,7 +655,7 @@ const DocumentsUpload = ({
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  {/* Email Status Badge - Floating */}
+                  {/* Email Status Badge */}
                   {doc.is_emailed && (
                     <div
                       className='position-absolute d-flex align-items-center gap-1 px-2 py-1 rounded-pill'
@@ -598,9 +677,6 @@ const DocumentsUpload = ({
                         height='10'
                         fill='currentColor'
                         viewBox='0 0 20 20'
-                        style={{
-                          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))',
-                        }}
                       >
                         <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
                         <path d='m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
@@ -657,24 +733,18 @@ const DocumentsUpload = ({
                     <div className='flex-grow-1 min-w-0'>
                       <h6
                         className='mb-0 fw-bold text-truncate'
-                        style={{
-                          color: typeStyle.color,
-                          fontSize: '0.9rem',
-                        }}
+                        style={{ color: typeStyle.color, fontSize: '0.9rem' }}
                       >
                         {getDocumentType(doc)}
                       </h6>
                       <p
                         className='mb-0 text-truncate opacity-75'
-                        style={{
-                          fontSize: '0.7rem',
-                          color: typeStyle.color,
-                        }}
+                        style={{ fontSize: '0.7rem', color: typeStyle.color }}
                       >
                         {doc.original_name}
                       </p>
                     </div>
-                    {/* Signature Status Badge - Compact */}
+                    {/* Signature Status Badge */}
                     <span
                       className='px-2 py-1 rounded-pill d-flex align-items-center gap-1'
                       style={{
@@ -747,10 +817,7 @@ const DocumentsUpload = ({
                         </div>
                         <span
                           className='fw-semibold'
-                          style={{
-                            color: '#059669',
-                            fontSize: '0.7rem',
-                          }}
+                          style={{ color: '#059669', fontSize: '0.7rem' }}
                         >
                           Email Delivery
                         </span>
@@ -829,7 +896,7 @@ const DocumentsUpload = ({
                       </span>
                     </div>
 
-                    {/* Action Buttons - Compact */}
+                    {/* Action Buttons */}
                     <div className='d-flex gap-1'>
                       <button
                         className='btn btn-sm px-2 py-1 rounded-2 d-flex align-items-center gap-1'
@@ -892,7 +959,7 @@ const DocumentsUpload = ({
                     </div>
                   </div>
 
-                  {/* Show Tooltip only for the hovered document */}
+                  {/* Tooltip */}
                   {currentHoveredDocId === doc.id && (
                     <Tooltip
                       content={tooltipContent}
@@ -938,7 +1005,251 @@ const DocumentsUpload = ({
         </div>
       )}
 
-      {/* Manage Documents Modal */}
+      {/* Solicitor Notification Section */}
+      {documents.length > 0 && (
+        <div
+          className='mt-5 p-5 rounded-5 position-relative overflow-hidden'
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(5, 150, 105, 0.08) 50%, rgba(16, 185, 129, 0.03) 100%)',
+            border: '2px solid rgba(16, 185, 129, 0.12)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          {/* Floating background elements */}
+          <div
+            className='position-absolute rounded-circle'
+            style={{
+              width: '200px',
+              height: '200px',
+              background:
+                'radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 70%)',
+              top: '-50px',
+              right: '-50px',
+              animation: 'slowFloat 8s ease-in-out infinite',
+            }}
+          />
+          <div
+            className='position-absolute'
+            style={{
+              width: '120px',
+              height: '120px',
+              background: 'rgba(5, 150, 105, 0.04)',
+              bottom: '-30px',
+              left: '-30px',
+              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+              animation: 'slowFloat 6s ease-in-out infinite reverse',
+            }}
+          />
+
+          <div className='row align-items-center position-relative'>
+            <div className='col-lg-8 col-xl-9'>
+              <div className='d-flex align-items-center gap-4 mb-4'>
+                <div
+                  className='position-relative d-flex align-items-center justify-content-center rounded-4'
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    background:
+                      'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    boxShadow: '0 12px 40px rgba(16, 185, 129, 0.3)',
+                  }}
+                >
+                  <svg
+                    width='28'
+                    height='28'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
+                    <path d='m18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
+                  </svg>
+
+                  {/* Animated ring */}
+                  <div
+                    className='position-absolute w-100 h-100 rounded-4'
+                    style={{
+                      border: '3px solid rgba(16, 185, 129, 0.3)',
+                      animation: 'pulseRing 3s ease-out infinite',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <h4
+                    className='mb-2 fw-bold'
+                    style={{ color: '#047857', fontSize: '1.5rem' }}
+                  >
+                    Notify Solicitor
+                  </h4>
+                  <p
+                    className='mb-0'
+                    style={{
+                      color: '#065f46',
+                      fontSize: '1.1rem',
+                      lineHeight: '1.5',
+                    }}
+                  >
+                    Send a professional email notification about the newly
+                    uploaded documents to keep the solicitor informed of the
+                    latest updates.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature highlights */}
+              <div className='row g-3 mb-4'>
+                <div className='col-sm-6 col-lg-4'>
+                  <div className='d-flex align-items-center gap-2'>
+                    <div
+                      className='d-flex align-items-center justify-content-center rounded-2 flex-shrink-0'
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#059669',
+                      }}
+                    >
+                      <svg
+                        width='12'
+                        height='12'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                    </div>
+                    <span
+                      style={{
+                        color: '#065f46',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Instant delivery
+                    </span>
+                  </div>
+                </div>
+
+                <div className='col-sm-6 col-lg-4'>
+                  <div className='d-flex align-items-center gap-2'>
+                    <div
+                      className='d-flex align-items-center justify-content-center rounded-2 flex-shrink-0'
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#059669',
+                      }}
+                    >
+                      <svg
+                        width='12'
+                        height='12'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                    </div>
+                    <span
+                      style={{
+                        color: '#065f46',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Professional template
+                    </span>
+                  </div>
+                </div>
+
+                <div className='col-sm-6 col-lg-4'>
+                  <div className='d-flex align-items-center gap-2'>
+                    <div
+                      className='d-flex align-items-center justify-content-center rounded-2 flex-shrink-0'
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#059669',
+                      }}
+                    >
+                      <svg
+                        width='12'
+                        height='12'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                    </div>
+                    <span
+                      style={{
+                        color: '#065f46',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Detailed summary
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className='col-lg-4 col-xl-3 text-center'>
+              <SolicitorNotificationButton
+                applicationId={applicationId}
+                onSuccess={handleNotificationSuccess}
+                onError={handleNotificationError}
+                disabled={manageDocummentButtonDisabled}
+                documentsCount={documents.length}
+                onShowModal={handleShowSolicitorModal}
+                triggerSend={triggerEmailSend}
+                onSendComplete={handleSendComplete}
+              />
+
+              {/* Additional info */}
+              <p className='mt-3 mb-0 small text-muted'>
+                Email will include application #{applicationId} details
+              </p>
+            </div>
+          </div>
+
+          <style>{`
+           @keyframes slowFloat {
+             0%, 100% { transform: translateY(0px) rotate(0deg); }
+             50% { transform: translateY(-20px) rotate(180deg); }
+           }
+
+           @keyframes pulseRing {
+             0% {
+               transform: scale(1);
+               opacity: 0.8;
+             }
+             100% {
+               transform: scale(1.4);
+               opacity: 0;
+             }
+           }
+         `}</style>
+        </div>
+      )}
+
+      {/* Modals */}
       <ManageDocumentsModal
         isOpen={isManageModalOpen}
         onClose={handleCloseManageModal}
@@ -951,7 +1262,14 @@ const DocumentsUpload = ({
         loadingRequirements={loadingRequirements}
       />
 
-      {/* Use the confirmation modal hook */}
+      <SolicitorNotificationModal
+        isOpen={showSolicitorModal}
+        onConfirm={handleConfirmSolicitorNotification}
+        onCancel={handleCloseSolicitorModal}
+        applicationId={applicationId}
+        documentsCount={documents.length}
+      />
+
       <ConfirmModal
         isOpen={confirmState.isOpen}
         document={confirmState.document}
