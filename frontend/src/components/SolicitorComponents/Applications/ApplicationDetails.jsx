@@ -144,18 +144,48 @@ const ApplicationDetails = () => {
     );
     if (confirmReject) {
       try {
+        // Get current user from Redux state
+        const currentUser = user; // user is already available from useSelector
+
+        // Append user email to rejection reason
+        const rejectionReasonWithUser = `${rejectionReason}\n\nRejected by: ${
+          currentUser?.email || 'Unknown User'
+        }`;
+
+        // Preserve all existing application data and only update rejection fields
         const rejectData = {
+          ...application, // Spread all existing application data
           is_rejected: true,
-          rejected_reason: rejectionReason,
+          rejected_reason: rejectionReasonWithUser, // Use the modified reason with user email
+          rejected_date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
+          // Ensure critical fields are preserved
+          applicants: application.applicants || [],
+          documents: application.documents || [],
+          signed_documents: application.signed_documents || [],
+          deceased: application.deceased || {},
+          // Add any other critical fields that should be preserved
         };
+
+        // Remove any fields that might cause issues or are read-only
+        delete rejectData.id;
+        delete rejectData.created_at;
+        delete rejectData.updated_at;
+        delete rejectData.date_submitted;
+        delete rejectData.processing_status;
+        delete rejectData.loan;
+
         const endpoint = `/api/applications/agent_applications/${id}/`;
         const response = await patchData(endpoint, rejectData);
+
         console.log('Application rejected:', response);
+
         setApplication((prev) => ({
           ...prev,
           is_rejected: true,
-          rejected_reason: rejectionReason,
+          rejected_reason: rejectionReasonWithUser,
+          rejected_date: new Date().toISOString().split('T')[0],
         }));
+
         setShowRejectionForm(false);
       } catch (error) {
         console.error('Error rejecting application:', error);
