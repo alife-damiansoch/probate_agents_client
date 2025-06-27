@@ -26,9 +26,11 @@ const ApplicationDetailStages = ({
   const [showModal, setShowModal] = useState(false);
   const [showCCRUploadModal, setShowCCRUploadModal] = useState(false);
   const [internalFiles, setInternalFiles] = useState([]);
+  const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
+  // ALL HOOKS MUST COME FIRST - BEFORE ANY CONDITIONAL RETURNS
   useEffect(() => {
     const fetchInternalFiles = async () => {
       if (application?.id) {
@@ -50,20 +52,41 @@ const ApplicationDetailStages = ({
   }, [application?.id, refresh]);
 
   useEffect(() => {
+    const fetchEmails = async () => {
+      if (application?.id) {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetchData(
+            token,
+            `api/applications/${application.id}/emails/`
+          );
+          if (response && response.status >= 200 && response.status < 300) {
+            setEmails(response.data || []);
+          } else {
+            setEmails([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch emails:', error);
+          setEmails([]);
+        }
+      }
+    };
+
+    fetchEmails();
+  }, [application?.id, refresh]);
+
+  useEffect(() => {
     const calculateCompletionStatus = () => {
       if (!application) return false;
 
       const steps = getTimelineSteps();
-
       const allTimelineStepsComplete = steps.every((step) => step.completed);
-
       return allTimelineStepsComplete;
     };
 
     const completionStatus = calculateCompletionStatus();
-
     setAllStagesCompleted(completionStatus);
-  }, [application, internalFiles, currentRequirements, refresh]);
+  }, [application, internalFiles, currentRequirements, emails, refresh]);
 
   const getTimelineSteps = () => {
     const estateValue =
@@ -144,6 +167,195 @@ const ApplicationDetailStages = ({
     const allDocumentsComplete =
       allRequirementsUploaded && allMissingDocuments.length === 0;
 
+    // Analyze emails data for completion status
+    const analyzeEmails = () => {
+      if (!emails || emails.length === 0) {
+        return {
+          completed: false,
+          description: 'No emails created yet',
+          hasWarning: true,
+        };
+      }
+
+      const sentEmails = emails.filter(
+        (email) => email.sent_at !== null && email.status !== 'draft'
+      );
+      const draftEmails = emails.filter(
+        (email) => email.sent_at === null || email.status === 'draft'
+      );
+      const totalDocumentCount = emails.reduce(
+        (sum, email) => sum + (email.document_count || 0),
+        0
+      );
+      const sentDocumentCount = sentEmails.reduce(
+        (sum, email) => sum + (email.document_count || 0),
+        0
+      );
+
+      // All emails are drafts - not completed
+      if (sentEmails.length === 0) {
+        return {
+          completed: false,
+          description: `${emails.length} email(s) created but none sent yet`,
+          hasWarning: true,
+          details: `All ${emails.length} email(s) are still in draft status`,
+        };
+      }
+
+      // Some emails sent but no documents attached - not completed
+      if (sentEmails.length > 0 && totalDocumentCount === 0) {
+        return {
+          completed: false,
+          description: `${sentEmails.length} email(s) sent but no documents attached`,
+          hasWarning: true,
+          details: 'Emails sent without any documents',
+        };
+      }
+
+      // Some emails sent but some documents only - not completed
+      if (sentEmails.length > 0 && sentDocumentCount === 0) {
+        return {
+          completed: false,
+          description: `${sentEmails.length} email(s) sent but documents not included`,
+          hasWarning: true,
+          details: 'Sent emails contain no documents',
+        };
+      }
+
+      // Some emails sent with documents but still have drafts - completed with warning
+      if (
+        sentEmails.length > 0 &&
+        sentDocumentCount > 0 &&
+        draftEmails.length > 0
+      ) {
+        return {
+          completed: true,
+          description: `${sentEmails.length} email(s) sent with ${sentDocumentCount} document(s)`,
+          hasWarning: true,
+          details: `${draftEmails.length} email(s) still in draft status`,
+        };
+      }
+
+      // All emails sent with documents - fully completed
+      if (
+        sentEmails.length > 0 &&
+        sentDocumentCount > 0 &&
+        draftEmails.length === 0
+      ) {
+        return {
+          completed: true,
+          description: `All ${sentEmails.length} email(s) sent with ${sentDocumentCount} document(s)`,
+          hasWarning: false,
+          details: 'All emails successfully sent with documents',
+        };
+      }
+
+      // Fallback case
+      return {
+        completed: false,
+        description: 'Email status unclear',
+        hasWarning: true,
+        details: 'Unable to determine email completion status',
+      };
+    };
+
+    const emailAnalysis = analyzeEmails();
+
+    // All steps before beneficiary emails step
+    const allStepsBeforeBeneficiaryComplete =
+      allPreviousStepsComplete && allDocumentsComplete;
+
+    // Analyze advancement agreement status
+    // Analyze advancement agreement status
+    const analyzeAdvancementAgreement = () => {
+      const allDocs = [
+        ...(application.documents || []),
+        ...(application.signed_documents || []),
+      ];
+
+      if (allDocs.length === 0) {
+        return {
+          completed: false,
+          created: false,
+          signed: false,
+          description: 'No documents found in application',
+          hasWarning: true,
+        };
+      }
+
+      const loanAgreements = allDocs.filter(
+        (doc) => doc.is_loan_agreement === true
+      );
+
+      if (loanAgreements.length === 0) {
+        return {
+          completed: false,
+          created: false,
+          signed: false,
+          description: 'Advancement agreement not created yet',
+          hasWarning: true,
+          details: `Found ${allDocs.length} document(s) but no loan agreement`,
+        };
+      }
+
+      const signedAgreements = loanAgreements.filter(
+        (doc) => doc.is_signed === true
+      );
+
+      if (loanAgreements.length > 0 && signedAgreements.length === 0) {
+        return {
+          completed: false,
+          created: true,
+          signed: false,
+          description: 'Advancement agreement created but not signed',
+          hasWarning: true,
+          details: `${loanAgreements.length} agreement(s) created, none signed`,
+        };
+      }
+
+      if (
+        signedAgreements.length > 0 &&
+        signedAgreements.length < loanAgreements.length
+      ) {
+        return {
+          completed: true,
+          created: true,
+          signed: true,
+          description: 'Advancement agreement signed',
+          hasWarning: true,
+          details: `${signedAgreements.length} of ${loanAgreements.length} agreement(s) signed`,
+        };
+      }
+
+      if (
+        signedAgreements.length > 0 &&
+        signedAgreements.length === loanAgreements.length
+      ) {
+        return {
+          completed: true,
+          created: true,
+          signed: true,
+          description: 'All advancement agreements signed',
+          hasWarning: false,
+          details: `${signedAgreements.length} agreement(s) fully executed`,
+        };
+      }
+
+      return {
+        completed: false,
+        created: false,
+        signed: false,
+        description: 'Agreement status unclear',
+        hasWarning: true,
+      };
+    };
+
+    const agreementAnalysis = analyzeAdvancementAgreement();
+
+    // All steps before advancement agreement step
+    const allStepsBeforeAgreementComplete =
+      allStepsBeforeBeneficiaryComplete && emailAnalysis.completed;
+
     console.log(allMissingDocuments);
 
     const missingSubmittedRequirements = [];
@@ -187,6 +399,8 @@ const ApplicationDetailStages = ({
         icon: '🏠',
         actionRequired: !estateValueComplete,
       },
+      // In your ApplicationDetailStages.jsx - update the processing step:
+
       {
         id: 'processing',
         title: 'Details Confirmation',
@@ -201,12 +415,16 @@ const ApplicationDetailStages = ({
                 : 'Method Confirmed'
             }`
           : submittedComplete && solicitorAssigned && estateValueComplete
-          ? 'Ready for solicitor confirmation'
+          ? 'Ready for solicitor confirmation - Click to proceed'
           : 'Available after completing previous steps',
         completed: processingStatusComplete,
-        userAction: false,
+        userAction: false, // Changed from true
         icon: '🤝',
-        actionRequired: false,
+        actionRequired:
+          !processingStatusComplete &&
+          submittedComplete &&
+          solicitorAssigned &&
+          estateValueComplete, // More specific
         isClickable:
           submittedComplete &&
           solicitorAssigned &&
@@ -272,6 +490,122 @@ const ApplicationDetailStages = ({
         isBlurred: !allPreviousStepsComplete,
         isDisabled: !allPreviousStepsComplete,
       },
+      {
+        id: 'beneficiary-emails',
+        title: 'Document Delivery to Beneficiary',
+        description: allStepsBeforeBeneficiaryComplete ? (
+          emailAnalysis.completed ? (
+            <div>
+              <div
+                style={{ marginBottom: emailAnalysis.hasWarning ? '4px' : '0' }}
+              >
+                {emailAnalysis.description}
+              </div>
+              {emailAnalysis.hasWarning && (
+                <div className='text-warning' style={{ fontSize: '0.85rem' }}>
+                  Warning: {emailAnalysis.details}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <div
+                className='text-danger'
+                style={{ fontSize: '0.85rem', marginBottom: '4px' }}
+              >
+                Agent: Ensure all required documents are sent to the beneficiary
+              </div>
+              <div>{emailAnalysis.description}</div>
+              {emailAnalysis.details && (
+                <div
+                  className='text-warning'
+                  style={{ fontSize: '0.8rem', marginTop: '2px' }}
+                >
+                  {emailAnalysis.details}
+                </div>
+              )}
+            </div>
+          )
+        ) : (
+          'Available after completing all previous steps'
+        ),
+        completed: emailAnalysis.completed,
+        userAction:
+          !emailAnalysis.completed && allStepsBeforeBeneficiaryComplete,
+        icon: '📤',
+        actionRequired:
+          !emailAnalysis.completed && allStepsBeforeBeneficiaryComplete,
+        isBlurred: !allStepsBeforeBeneficiaryComplete,
+        isDisabled: !allStepsBeforeBeneficiaryComplete,
+        isClickable: false, // User cannot click this step as mentioned
+      },
+      {
+        id: 'advancement-agreement',
+        title: 'Advancement Agreement',
+        description: allStepsBeforeAgreementComplete ? (
+          agreementAnalysis.completed ? (
+            <div>
+              <div
+                style={{
+                  marginBottom: agreementAnalysis.hasWarning ? '4px' : '0',
+                }}
+              >
+                ✅ Created • {agreementAnalysis.signed ? '✅' : '❌'} Signed
+              </div>
+              <div
+                style={{
+                  marginBottom: agreementAnalysis.hasWarning ? '4px' : '0',
+                }}
+              >
+                {agreementAnalysis.description}
+              </div>
+              {agreementAnalysis.hasWarning && (
+                <div className='text-warning' style={{ fontSize: '0.85rem' }}>
+                  Warning: {agreementAnalysis.details}
+                </div>
+              )}
+              {agreementAnalysis.details && !agreementAnalysis.hasWarning && (
+                <div className='text-warning' style={{ fontSize: '0.85rem' }}>
+                  {agreementAnalysis.details}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <div style={{ marginBottom: '4px' }}>
+                {agreementAnalysis.created ? '✅' : '❌'} Created •{' '}
+                {agreementAnalysis.signed ? '✅' : '❌'} Signed
+              </div>
+              <div
+                className='text-danger'
+                style={{ fontSize: '0.85rem', marginBottom: '4px' }}
+              >
+                Agent: Create and ensure advancement agreement is signed
+              </div>
+              <div>{agreementAnalysis.description}</div>
+              {agreementAnalysis.details && (
+                <div
+                  className='text-warning'
+                  style={{ fontSize: '0.8rem', marginTop: '2px' }}
+                >
+                  {agreementAnalysis.details}
+                </div>
+              )}
+            </div>
+          )
+        ) : (
+          'Available after completing all previous steps'
+        ),
+        completed: agreementAnalysis.completed,
+        userAction:
+          !agreementAnalysis.completed && allStepsBeforeAgreementComplete,
+        icon: '📋',
+        actionRequired:
+          !agreementAnalysis.completed && allStepsBeforeAgreementComplete,
+        isBlurred: !allStepsBeforeAgreementComplete,
+        isDisabled: !allStepsBeforeAgreementComplete,
+        isClickable: false,
+      },
     ];
   };
 
@@ -336,6 +670,230 @@ const ApplicationDetailStages = ({
       console.error('Error uploading CCR file:', error);
     }
   };
+
+  // NOW WE CAN CHECK FOR REJECTION - AFTER ALL HOOKS
+  if (application?.is_rejected) {
+    return (
+      <div
+        className='bg-white rounded-4 p-4 mb-4'
+        style={{
+          boxShadow:
+            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        }}
+      >
+        {/* Rejection Header */}
+        <div className='text-center mb-4'>
+          <div
+            className='d-inline-flex align-items-center justify-content-center rounded-circle mb-3'
+            style={{
+              width: '80px',
+              height: '80px',
+              background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+              color: 'white',
+            }}
+          >
+            <svg width='40' height='40' fill='currentColor' viewBox='0 0 20 20'>
+              <path
+                fillRule='evenodd'
+                d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
+                clipRule='evenodd'
+              />
+            </svg>
+          </div>
+          <h3 className='fw-bold text-danger mb-2'>Application Rejected</h3>
+          <p className='text-muted mb-0' style={{ fontSize: '1.1rem' }}>
+            This application has been rejected and no further processing is
+            required
+          </p>
+        </div>
+
+        {/* Rejection Details Card */}
+        <div
+          className='rounded-3 p-4 mb-4'
+          style={{
+            background: 'linear-gradient(135deg, #fef2f2 0%, #fef7f7 100%)',
+            border: '1px solid #fecaca',
+          }}
+        >
+          <div className='row g-4'>
+            {/* Rejection Date */}
+            <div className='col-md-6'>
+              <div className='d-flex align-items-center gap-3'>
+                <div
+                  className='d-flex align-items-center justify-content-center rounded-2'
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                  }}
+                >
+                  <svg
+                    width='24'
+                    height='24'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path
+                      fillRule='evenodd'
+                      d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z'
+                      clipRule='evenodd'
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h6 className='fw-bold mb-1 text-danger'>Rejection Date</h6>
+                  <p
+                    className='mb-0 fw-semibold'
+                    style={{ fontSize: '1.1rem' }}
+                  >
+                    {application.rejected_date
+                      ? formatDate(application.rejected_date)
+                      : 'Not specified'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Rejected By */}
+            <div className='col-md-6'>
+              <div className='d-flex align-items-center gap-3'>
+                <div
+                  className='d-flex align-items-center justify-content-center rounded-2'
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                  }}
+                >
+                  <svg
+                    width='24'
+                    height='24'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path
+                      fillRule='evenodd'
+                      d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
+                      clipRule='evenodd'
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h6 className='fw-bold mb-1 text-danger'>Rejected By</h6>
+                  <p
+                    className='mb-0 fw-semibold'
+                    style={{ fontSize: '1.1rem' }}
+                  >
+                    {(() => {
+                      const rejectedByMatch =
+                        application.rejected_reason?.match(
+                          /Rejected by: (.+)$/
+                        );
+                      return rejectedByMatch
+                        ? rejectedByMatch[1]
+                        : 'Not specified';
+                    })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Rejection Reason */}
+        <div
+          className='rounded-3 p-4'
+          style={{
+            background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <div className='d-flex align-items-start gap-3'>
+            <div
+              className='d-flex align-items-center justify-content-center rounded-2 flex-shrink-0'
+              style={{
+                width: '48px',
+                height: '48px',
+                backgroundColor: '#6b7280',
+                color: 'white',
+              }}
+            >
+              <svg
+                width='24'
+                height='24'
+                fill='currentColor'
+                viewBox='0 0 20 20'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z'
+                  clipRule='evenodd'
+                />
+              </svg>
+            </div>
+            <div className='flex-grow-1'>
+              <h6 className='fw-bold mb-3' style={{ color: '#374151' }}>
+                Rejection Reason
+              </h6>
+              <div
+                className='p-3 rounded-2'
+                style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  minHeight: '80px',
+                }}
+              >
+                {application.rejected_reason ? (
+                  <div style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>
+                    {(() => {
+                      const parts =
+                        application.rejected_reason.split('\n\nRejected by:');
+                      const mainReason = parts[0] || 'No reason provided';
+                      return (
+                        <p
+                          className='mb-0'
+                          style={{ fontSize: '1rem', color: '#374151' }}
+                        >
+                          {mainReason}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  <p className='mb-0 text-muted fst-italic'>
+                    No rejection reason provided
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Message */}
+        <div className='text-center mt-4'>
+          <div
+            className='d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill'
+            style={{
+              backgroundColor: '#f3f4f6',
+              color: '#6b7280',
+              fontSize: '0.875rem',
+            }}
+          >
+            <svg width='16' height='16' fill='currentColor' viewBox='0 0 20 20'>
+              <path
+                fillRule='evenodd'
+                d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
+                clipRule='evenodd'
+              />
+            </svg>
+            No further action required for this application
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const userSteps = getTimelineSteps();
   const statusStep = getStatusStep();
