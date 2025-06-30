@@ -8,6 +8,7 @@ const TimelineStep = ({
   application,
   showModal,
   showCCRUploadModal,
+  onRunPepCheck, // NEW: PEP check handler (opens modal)
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -18,6 +19,9 @@ const TimelineStep = ({
       showModal(true);
     } else if (step.id === 'ccr') {
       showCCRUploadModal(true);
+    } else if (step.id === 'pep-check') {
+      // NEW: Handle PEP check click
+      onRunPepCheck();
     }
   };
 

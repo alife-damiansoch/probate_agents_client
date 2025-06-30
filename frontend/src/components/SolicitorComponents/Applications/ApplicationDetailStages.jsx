@@ -8,6 +8,7 @@ import {
 import { formatDate } from '../../GenericFunctions/HelperGenericFunctions';
 import AgentInstructionAlert from './ApplicationDetailStagesParts/AgentInstructionAlert';
 import CCRUploadModal from './ApplicationDetailStagesParts/CCRUploadModal';
+import PEPCheckModal from './ApplicationDetailStagesParts/PEPCheckModal';
 import ProcessingStatusModal from './ApplicationDetailStagesParts/ProcessingStatusModal';
 import ProgressSummary from './ApplicationDetailStagesParts/ProgressSummary';
 import RejectionReason from './ApplicationDetailStagesParts/RejectionReason';
@@ -25,6 +26,7 @@ const ApplicationDetailStages = ({
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [showCCRUploadModal, setShowCCRUploadModal] = useState(false);
+  const [showPEPCheckModal, setShowPEPCheckModal] = useState(false);
   const [internalFiles, setInternalFiles] = useState([]);
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -113,12 +115,21 @@ const ApplicationDetailStages = ({
 
     const ccrFileComplete = internalFiles.some((file) => file.is_ccr === true);
 
+    // NEW: Check for PEP check completion
+    const pepCheckComplete = internalFiles.some(
+      (file) => file.is_pep_check === true
+    );
+
     const allPreviousStepsComplete =
       submittedComplete &&
       solicitorAssigned &&
       estateValueComplete &&
       processingStatusComplete &&
       ccrFileComplete;
+
+    // NEW: All steps including PEP check
+    const allStepsIncludingPepComplete =
+      allPreviousStepsComplete && pepCheckComplete;
 
     const missingRequirements = [];
     if (currentRequirements && Array.isArray(currentRequirements)) {
@@ -192,7 +203,6 @@ const ApplicationDetailStages = ({
         0
       );
 
-      // All emails are drafts - not completed
       if (sentEmails.length === 0) {
         return {
           completed: false,
@@ -202,7 +212,6 @@ const ApplicationDetailStages = ({
         };
       }
 
-      // Some emails sent but no documents attached - not completed
       if (sentEmails.length > 0 && totalDocumentCount === 0) {
         return {
           completed: false,
@@ -212,7 +221,6 @@ const ApplicationDetailStages = ({
         };
       }
 
-      // Some emails sent but some documents only - not completed
       if (sentEmails.length > 0 && sentDocumentCount === 0) {
         return {
           completed: false,
@@ -222,7 +230,6 @@ const ApplicationDetailStages = ({
         };
       }
 
-      // Some emails sent with documents but still have drafts - completed with warning
       if (
         sentEmails.length > 0 &&
         sentDocumentCount > 0 &&
@@ -236,7 +243,6 @@ const ApplicationDetailStages = ({
         };
       }
 
-      // All emails sent with documents - fully completed
       if (
         sentEmails.length > 0 &&
         sentDocumentCount > 0 &&
@@ -250,7 +256,6 @@ const ApplicationDetailStages = ({
         };
       }
 
-      // Fallback case
       return {
         completed: false,
         description: 'Email status unclear',
@@ -261,11 +266,10 @@ const ApplicationDetailStages = ({
 
     const emailAnalysis = analyzeEmails();
 
-    // All steps before beneficiary emails step
+    // All steps before beneficiary emails step (now includes PEP check)
     const allStepsBeforeBeneficiaryComplete =
-      allPreviousStepsComplete && allDocumentsComplete;
+      allStepsIncludingPepComplete && allDocumentsComplete;
 
-    // Analyze advancement agreement status
     // Analyze advancement agreement status
     const analyzeAdvancementAgreement = () => {
       const allDocs = [
@@ -356,8 +360,6 @@ const ApplicationDetailStages = ({
     const allStepsBeforeAgreementComplete =
       allStepsBeforeBeneficiaryComplete && emailAnalysis.completed;
 
-    console.log(allMissingDocuments);
-
     const missingSubmittedRequirements = [];
     if (!amountValid) missingSubmittedRequirements.push('Loan Amount');
     if (!applicantsValid)
@@ -399,8 +401,6 @@ const ApplicationDetailStages = ({
         icon: '🏠',
         actionRequired: !estateValueComplete,
       },
-      // In your ApplicationDetailStages.jsx - update the processing step:
-
       {
         id: 'processing',
         title: 'Details Confirmation',
@@ -418,13 +418,13 @@ const ApplicationDetailStages = ({
           ? 'Ready for solicitor confirmation - Click to proceed'
           : 'Available after completing previous steps',
         completed: processingStatusComplete,
-        userAction: false, // Changed from true
+        userAction: false,
         icon: '🤝',
         actionRequired:
           !processingStatusComplete &&
           submittedComplete &&
           solicitorAssigned &&
-          estateValueComplete, // More specific
+          estateValueComplete,
         isClickable:
           submittedComplete &&
           solicitorAssigned &&
@@ -456,10 +456,59 @@ const ApplicationDetailStages = ({
         isBlurred: !processingStatusComplete,
         isDisabled: ccrFileComplete,
       },
+      // NEW: PEP Check Step
+      {
+        id: 'pep-check',
+        title: 'PEP & Sanctions Check',
+        description: pepCheckComplete
+          ? (() => {
+              const pepFile = internalFiles.find(
+                (file) => file.is_pep_check === true
+              );
+              const isHighRisk =
+                pepFile &&
+                pepFile.description &&
+                pepFile.description.includes('MATCH FOUND');
+              return isHighRisk
+                ? '⚠️ PEP check completed - REQUIRES REVIEW'
+                : '✅ PEP check completed - Clear';
+            })()
+          : 'Run automated PEP & sanctions check',
+        completed: pepCheckComplete,
+        userAction: !pepCheckComplete && ccrFileComplete,
+        icon: pepCheckComplete
+          ? (() => {
+              const pepFile = internalFiles.find(
+                (file) => file.is_pep_check === true
+              );
+              const isHighRisk =
+                pepFile &&
+                pepFile.description &&
+                pepFile.description.includes('MATCH FOUND');
+              return isHighRisk ? '⚠️' : '✅';
+            })()
+          : '🔍',
+        actionRequired: !pepCheckComplete && ccrFileComplete,
+        isClickable: ccrFileComplete && !pepCheckComplete,
+        isBlurred: !ccrFileComplete,
+        isDisabled: pepCheckComplete,
+        hasWarning:
+          pepCheckComplete &&
+          (() => {
+            const pepFile = internalFiles.find(
+              (file) => file.is_pep_check === true
+            );
+            return (
+              pepFile &&
+              pepFile.description &&
+              pepFile.description.includes('MATCH FOUND')
+            );
+          })(),
+      },
       {
         id: 'documents',
         title: 'Required Documents',
-        description: allPreviousStepsComplete ? (
+        description: allStepsIncludingPepComplete ? (
           allDocumentsComplete ? (
             'All documents submitted'
           ) : allMissingDocuments.length > 0 ? (
@@ -484,11 +533,11 @@ const ApplicationDetailStages = ({
           'Available after completing all previous steps'
         ),
         completed: allDocumentsComplete,
-        userAction: !allDocumentsComplete && allPreviousStepsComplete,
+        userAction: !allDocumentsComplete && allStepsIncludingPepComplete,
         icon: '📄',
-        actionRequired: !allDocumentsComplete && allPreviousStepsComplete,
-        isBlurred: !allPreviousStepsComplete,
-        isDisabled: !allPreviousStepsComplete,
+        actionRequired: !allDocumentsComplete && allStepsIncludingPepComplete,
+        isBlurred: !allStepsIncludingPepComplete,
+        isDisabled: !allStepsIncludingPepComplete,
       },
       {
         id: 'beneficiary-emails',
@@ -537,7 +586,7 @@ const ApplicationDetailStages = ({
           !emailAnalysis.completed && allStepsBeforeBeneficiaryComplete,
         isBlurred: !allStepsBeforeBeneficiaryComplete,
         isDisabled: !allStepsBeforeBeneficiaryComplete,
-        isClickable: false, // User cannot click this step as mentioned
+        isClickable: false,
       },
       {
         id: 'advancement-agreement',
@@ -671,6 +720,30 @@ const ApplicationDetailStages = ({
     }
   };
 
+  // Handle PEP Check Modal
+  const handleRunPepCheck = () => {
+    setShowPEPCheckModal(true);
+  };
+
+  const handlePEPCheckAPICall = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = `/api/internal-files/pep-check/application/${application.id}/`;
+
+      const response = await postData(token, endpoint, {});
+
+      if (response && response.status >= 200 && response.status < 300) {
+        setRefresh(!refresh);
+        return response.data;
+      } else {
+        throw new Error(response?.data?.error || 'Failed to run PEP check');
+      }
+    } catch (error) {
+      console.error('Error running PEP check:', error);
+      throw error;
+    }
+  };
+
   // NOW WE CAN CHECK FOR REJECTION - AFTER ALL HOOKS
   if (application?.is_rejected) {
     return (
@@ -737,45 +810,6 @@ const ApplicationDetailStages = ({
                     <path
                       fillRule='evenodd'
                       d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h6 className='fw-bold mb-1 text-danger'>Rejection Date</h6>
-                  <p
-                    className='mb-0 fw-semibold'
-                    style={{ fontSize: '1.1rem' }}
-                  >
-                    {application.rejected_date
-                      ? formatDate(application.rejected_date)
-                      : 'Not specified'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Rejected By */}
-            <div className='col-md-6'>
-              <div className='d-flex align-items-center gap-3'>
-                <div
-                  className='d-flex align-items-center justify-content-center rounded-2'
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    backgroundColor: '#dc2626',
-                    color: 'white',
-                  }}
-                >
-                  <svg
-                    width='24'
-                    height='24'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
                       clipRule='evenodd'
                     />
                   </svg>
@@ -925,6 +959,7 @@ const ApplicationDetailStages = ({
                 application={application}
                 showModal={setShowModal}
                 showCCRUploadModal={setShowCCRUploadModal}
+                onRunPepCheck={handleRunPepCheck}
               />
             ))}
           </div>
@@ -945,6 +980,13 @@ const ApplicationDetailStages = ({
         isOpen={showCCRUploadModal}
         onClose={() => setShowCCRUploadModal(false)}
         onUpload={handleUploadCCR}
+      />
+
+      <PEPCheckModal
+        isOpen={showPEPCheckModal}
+        onClose={() => setShowPEPCheckModal(false)}
+        onRunCheck={handlePEPCheckAPICall}
+        application={application}
       />
     </div>
   );
