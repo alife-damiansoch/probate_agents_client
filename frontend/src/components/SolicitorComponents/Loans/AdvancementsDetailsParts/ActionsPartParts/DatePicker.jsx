@@ -8,7 +8,7 @@ const DatePicker = ({ value, onChange, placeholder, loanBookCreatedAt }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [hoveredDate, setHoveredDate] = useState(null);
 
-  // Parse min and max dates properly
+  // Parse min and max dates properly with FIXED 365-day year
   const minDate = loanBookCreatedAt
     ? (() => {
         const parts = loanBookCreatedAt.split('T')[0].split('-');
@@ -22,20 +22,20 @@ const DatePicker = ({ value, onChange, placeholder, loanBookCreatedAt }) => {
 
   const maxDate = minDate
     ? (() => {
-        const maxYear = minDate.getFullYear() + 3; // 36 months = 3 years
-        const maxMonth = minDate.getMonth();
-        const maxDay = minDate.getDate();
-        return new Date(maxYear, maxMonth, maxDay);
+        const maxDate = new Date(minDate);
+        // FIXED: Use exactly 3 * 365 days (not 365 * 3 which could include leap years)
+        maxDate.setDate(maxDate.getDate() + 3 * 365 - 1); // exactly 1095 days
+        return maxDate;
       })()
     : null;
 
-  // Calculate yearly fixed rate transition date (exactly 1 year from creation)
+  // Calculate yearly fixed rate transition date (exactly 365 days from creation)
   const yearlyRateTransitionDate = minDate
     ? (() => {
-        const transitionYear = minDate.getFullYear() + 1;
-        const transitionMonth = minDate.getMonth();
-        const transitionDay = minDate.getDate();
-        return new Date(transitionYear, transitionMonth, transitionDay);
+        const transitionDate = new Date(minDate);
+        // FIXED: Use exactly 365 days, not 1 year (which could be 366 in leap year)
+        transitionDate.setDate(transitionDate.getDate() + 365 - 1);
+        return transitionDate;
       })()
     : null;
 
@@ -263,6 +263,11 @@ const DatePicker = ({ value, onChange, placeholder, loanBookCreatedAt }) => {
                   to <strong>{maxDate.toLocaleDateString()}</strong>
                 </span>
               </div>
+              <div className='small text-muted mt-1'>
+                <span>
+                  Maximum term: <strong>3 × 365 days (1,095 days total)</strong>
+                </span>
+              </div>
             </div>
 
             {/* Yearly Rate Transition Quick Select */}
@@ -328,7 +333,8 @@ const DatePicker = ({ value, onChange, placeholder, loanBookCreatedAt }) => {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
-                      })}
+                      })}{' '}
+                      <span className='text-muted'>(+365 days)</span>
                     </div>
                   </div>
                 </div>

@@ -28,6 +28,10 @@ const ManageDocumentsModal = ({
   const [feeCounted, setFeeCounted] = useState(false);
   const [isGeneratingUndertaking, setIsGeneratingUndertaking] = useState(false);
   const [isGeneratingAgreement, setIsGeneratingAgreement] = useState(false);
+  const [isGeneratingTermsOfBusiness, setIsGeneratingTermsOfBusiness] =
+    useState(false);
+  const [isGeneratingSECCI, setIsGeneratingSECCI] = useState(false);
+
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -55,6 +59,11 @@ const ManageDocumentsModal = ({
   const hasLoanAgreement = existingDocuments.some(
     (doc) => doc.is_loan_agreement === true
   );
+  // Add this check with your existing document checks
+  const hasTermsOfBusiness = existingDocuments.some(
+    (doc) => doc.is_terms_of_business === true
+  );
+  const hasSECCI = existingDocuments.some((doc) => doc.is_secci === true);
 
   // Fetch application data when modal opens
   useEffect(() => {
@@ -279,6 +288,80 @@ const ManageDocumentsModal = ({
     }
   };
 
+  // Generate Terms of Business Document
+  const generateTermsOfBusinessHandler = async () => {
+    if (hasTermsOfBusiness) return; // This prevents generation if already exists
+
+    setIsGeneratingTermsOfBusiness(true);
+    setErrors([]);
+    setSuccessMessage('');
+
+    const requestData = {
+      application_id: application.id,
+    };
+
+    try {
+      const response = await postData(
+        token,
+        '/api/generate_terms_of_business_pdf/',
+        requestData
+      );
+
+      if (response && response.status === 200 && response.data.success) {
+        setSuccessMessage(
+          response.data.message ||
+            'Terms of Business PDF generated and saved successfully'
+        );
+        setRefresh(!refresh);
+      } else {
+        setErrors(['Failed to generate Terms of Business document']);
+      }
+    } catch (error) {
+      console.error('Error generating Terms of Business:', error);
+      setErrors([
+        'An error occurred while generating the Terms of Business document',
+      ]);
+    } finally {
+      setIsGeneratingTermsOfBusiness(false);
+    }
+  };
+
+  const generateSECCIHandler = async () => {
+    if (hasSECCI) return;
+
+    setIsGeneratingSECCI(true);
+    setErrors([]);
+    setSuccessMessage('');
+
+    const requestData = {
+      application_id: application.id,
+      fee_agreed_for_undertaking: fee,
+    };
+
+    try {
+      const response = await postData(
+        token,
+        '/api/generate_secci_pdf/',
+        requestData
+      );
+
+      if (response && response.status === 200 && response.data.success) {
+        setSuccessMessage(
+          response.data.message ||
+            'SECCI Form PDF generated and saved successfully'
+        );
+        setRefresh(!refresh);
+      } else {
+        setErrors(['Failed to generate SECCI Form document']);
+      }
+    } catch (error) {
+      console.error('Error generating SECCI Form:', error);
+      setErrors(['An error occurred while generating the SECCI Form document']);
+    } finally {
+      setIsGeneratingSECCI(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -398,10 +481,16 @@ const ManageDocumentsModal = ({
                   <TemplateDocumentsSection
                     hasUndertaking={hasUndertaking}
                     hasLoanAgreement={hasLoanAgreement}
+                    hasTermsOfBusiness={hasTermsOfBusiness}
+                    hasSECCI={hasSECCI}
                     isGeneratingUndertaking={isGeneratingUndertaking}
                     isGeneratingAgreement={isGeneratingAgreement}
+                    isGeneratingTermsOfBusiness={isGeneratingTermsOfBusiness}
+                    isGeneratingSECCI={isGeneratingSECCI}
                     onGenerateUndertaking={generateUndertakingHandler}
                     onGenerateAgreement={generateAdvancementAgreementHandler}
+                    onGenerateTermsOfBusiness={generateTermsOfBusinessHandler}
+                    onGenerateSECCI={generateSECCIHandler}
                   />
 
                   {/* Error Messages */}
@@ -421,6 +510,8 @@ const ManageDocumentsModal = ({
                   currentRequirements={currentRequirements}
                   hasUndertaking={hasUndertaking}
                   hasLoanAgreement={hasLoanAgreement}
+                  hasTermsOfBusiness={hasTermsOfBusiness}
+                  hasSECCI={hasSECCI}
                 />
               </div>
             ) : (
