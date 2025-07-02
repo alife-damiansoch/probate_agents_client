@@ -3,10 +3,16 @@ import TemplateDocumentCard from './TemplateDocumentCard';
 const TemplateDocumentsSection = ({
   hasUndertaking,
   hasLoanAgreement,
+  hasTermsOfBusiness,
+  hasSECCI,
   isGeneratingUndertaking,
   isGeneratingAgreement,
+  isGeneratingTermsOfBusiness,
+  isGeneratingSECCI,
   onGenerateUndertaking,
   onGenerateAgreement,
+  onGenerateTermsOfBusiness,
+  onGenerateSECCI,
 }) => {
   const undertakingIcon = (
     <svg width='16' height='16' fill='currentColor' viewBox='0 0 20 20'>
@@ -23,6 +29,28 @@ const TemplateDocumentsSection = ({
       <path
         fillRule='evenodd'
         d='M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z'
+        clipRule='evenodd'
+      />
+    </svg>
+  );
+
+  const termsIcon = (
+    <svg width='16' height='16' fill='currentColor' viewBox='0 0 20 20'>
+      <path
+        fillRule='evenodd'
+        d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z'
+        clipRule='evenodd'
+      />
+      <path d='M8 8a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1zm0 4a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z' />
+    </svg>
+  );
+
+  const secciIcon = (
+    <svg width='16' height='16' fill='currentColor' viewBox='0 0 20 20'>
+      <path d='M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4z' />
+      <path
+        fillRule='evenodd'
+        d='M10 9a2 2 0 100-4 2 2 0 000 4zm-3 8a3 3 0 116 0H7z'
         clipRule='evenodd'
       />
     </svg>
@@ -59,6 +87,40 @@ const TemplateDocumentsSection = ({
       </div>
 
       <div className='row g-3'>
+        {/* Terms of Business Card - First as it's provided before signing */}
+        <TemplateDocumentCard
+          title='Terms of Business'
+          description='Pre-contractual information document'
+          icon={termsIcon}
+          isGenerated={hasTermsOfBusiness}
+          isGenerating={isGeneratingTermsOfBusiness}
+          onGenerate={onGenerateTermsOfBusiness}
+          iconBg='#8b5cf6'
+          bgColors={{
+            background: 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
+            border: '2px solid #8b5cf6',
+            textColor: '#6b46c1',
+            buttonBg: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+          }}
+        />
+
+        {/* SECCI Form Card - Second as it's mandatory pre-contractual */}
+        <TemplateDocumentCard
+          title='SECCI Form'
+          description='European credit information form'
+          icon={secciIcon}
+          isGenerated={hasSECCI}
+          isGenerating={isGeneratingSECCI}
+          onGenerate={onGenerateSECCI}
+          iconBg='#0ea5e9'
+          bgColors={{
+            background: 'linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%)',
+            border: '2px solid #0ea5e9',
+            textColor: '#0369a1',
+            buttonBg: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+          }}
+        />
+
         {/* Solicitor Undertaking Card */}
         <TemplateDocumentCard
           title='Solicitor Undertaking'

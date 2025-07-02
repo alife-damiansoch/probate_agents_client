@@ -6,6 +6,8 @@ const ApplicationSummarySidebar = ({
   currentRequirements = [],
   hasUndertaking = false,
   hasLoanAgreement = false,
+  hasTermsOfBusiness = false,
+  hasSECCI = false, // Add this prop
 }) => {
   return (
     <div className='col-xl-3 col-lg-4'>
@@ -148,18 +150,22 @@ const ApplicationSummarySidebar = ({
         )}
 
         {/* Template Documents Status */}
-        {(hasUndertaking || hasLoanAgreement) && (
+        {(hasTermsOfBusiness ||
+          hasSECCI ||
+          hasUndertaking ||
+          hasLoanAgreement) && (
           <div className='mt-4'>
             <h6 className='fw-bold mb-3' style={{ color: '#0369a1' }}>
               Template Documents
             </h6>
             <div className='space-y-2'>
-              {hasUndertaking && (
+              {/* Terms of Business - First as it's pre-contractual */}
+              {hasTermsOfBusiness && (
                 <div
                   className='d-flex align-items-center gap-2 p-2 rounded-3'
                   style={{
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)',
                   }}
                 >
                   <div
@@ -167,7 +173,7 @@ const ApplicationSummarySidebar = ({
                     style={{
                       width: '20px',
                       height: '20px',
-                      backgroundColor: '#10b981',
+                      backgroundColor: '#8b5cf6',
                       color: 'white',
                     }}
                   >
@@ -184,14 +190,129 @@ const ApplicationSummarySidebar = ({
                       />
                     </svg>
                   </div>
-                  <span
-                    className='small fw-semibold'
-                    style={{ color: '#047857' }}
-                  >
-                    Undertaking Generated
-                  </span>
+                  <div className='flex-grow-1'>
+                    <span
+                      className='small fw-semibold'
+                      style={{ color: '#6b46c1' }}
+                    >
+                      Terms of Business
+                    </span>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        color: '#6b7280',
+                        marginTop: '1px',
+                      }}
+                    >
+                      Pre-contractual information
+                    </div>
+                  </div>
                 </div>
               )}
+
+              {/* SECCI Form - Second as it's mandatory pre-contractual */}
+              {hasSECCI && (
+                <div
+                  className='d-flex align-items-center gap-2 p-2 rounded-3'
+                  style={{
+                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                    border: '1px solid rgba(14, 165, 233, 0.2)',
+                  }}
+                >
+                  <div
+                    className='d-flex align-items-center justify-content-center rounded-2'
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      backgroundColor: '#0ea5e9',
+                      color: 'white',
+                    }}
+                  >
+                    <svg
+                      width='12'
+                      height='12'
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                  <div className='flex-grow-1'>
+                    <span
+                      className='small fw-semibold'
+                      style={{ color: '#0369a1' }}
+                    >
+                      SECCI Form
+                    </span>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        color: '#6b7280',
+                        marginTop: '1px',
+                      }}
+                    >
+                      EU credit information
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Solicitor Undertaking */}
+              {hasUndertaking && (
+                <div
+                  className='d-flex align-items-center gap-2 p-2 rounded-3'
+                  style={{
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    border: '1px solid rgba(245, 158, 11, 0.2)',
+                  }}
+                >
+                  <div
+                    className='d-flex align-items-center justify-content-center rounded-2'
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      backgroundColor: '#f59e0b',
+                      color: 'white',
+                    }}
+                  >
+                    <svg
+                      width='12'
+                      height='12'
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                  <div className='flex-grow-1'>
+                    <span
+                      className='small fw-semibold'
+                      style={{ color: '#92400e' }}
+                    >
+                      Solicitor Undertaking
+                    </span>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        color: '#6b7280',
+                        marginTop: '1px',
+                      }}
+                    >
+                      Requires solicitor signature
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Advancement Agreement */}
               {hasLoanAgreement && (
                 <div
                   className='d-flex align-items-center gap-2 p-2 rounded-3'
@@ -222,12 +343,23 @@ const ApplicationSummarySidebar = ({
                       />
                     </svg>
                   </div>
-                  <span
-                    className='small fw-semibold'
-                    style={{ color: '#047857' }}
-                  >
-                    Agreement Generated
-                  </span>
+                  <div className='flex-grow-1'>
+                    <span
+                      className='small fw-semibold'
+                      style={{ color: '#047857' }}
+                    >
+                      Advancement Agreement
+                    </span>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        color: '#6b7280',
+                        marginTop: '1px',
+                      }}
+                    >
+                      Requires applicant signature
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

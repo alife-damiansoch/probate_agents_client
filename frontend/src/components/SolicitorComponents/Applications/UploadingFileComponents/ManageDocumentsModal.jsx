@@ -7,6 +7,7 @@ import {
   postData,
 } from '../../../GenericFunctions/AxiosGenericFunctions';
 import renderErrors from '../../../GenericFunctions/HelperGenericFunctions';
+import ManualDocumentUploadModal from './ManageDocumentModalParts/ManualDocumentUploadModal';
 
 // Import the new smaller components
 import AlertMessage from './ManageDocumentModalParts/AlertMessage';
@@ -28,6 +29,10 @@ const ManageDocumentsModal = ({
   const [feeCounted, setFeeCounted] = useState(false);
   const [isGeneratingUndertaking, setIsGeneratingUndertaking] = useState(false);
   const [isGeneratingAgreement, setIsGeneratingAgreement] = useState(false);
+  const [isGeneratingTermsOfBusiness, setIsGeneratingTermsOfBusiness] =
+    useState(false);
+  const [isGeneratingSECCI, setIsGeneratingSECCI] = useState(false);
+
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -37,6 +42,8 @@ const ManageDocumentsModal = ({
   const [loadingRequirements, setLoadingRequirements] = useState(false);
   const [addingRequirement, setAddingRequirement] = useState(null);
   const [removingRequirement, setRemovingRequirement] = useState(null);
+
+  const [showManualUploadModal, setShowManualUploadModal] = useState(false);
 
   // Get token
   let tokenObj = Cookies.get('auth_token_agents');
@@ -55,6 +62,11 @@ const ManageDocumentsModal = ({
   const hasLoanAgreement = existingDocuments.some(
     (doc) => doc.is_loan_agreement === true
   );
+  // Add this check with your existing document checks
+  const hasTermsOfBusiness = existingDocuments.some(
+    (doc) => doc.is_terms_of_business === true
+  );
+  const hasSECCI = existingDocuments.some((doc) => doc.is_secci === true);
 
   // Fetch application data when modal opens
   useEffect(() => {
@@ -279,6 +291,80 @@ const ManageDocumentsModal = ({
     }
   };
 
+  // Generate Terms of Business Document
+  const generateTermsOfBusinessHandler = async () => {
+    if (hasTermsOfBusiness) return; // This prevents generation if already exists
+
+    setIsGeneratingTermsOfBusiness(true);
+    setErrors([]);
+    setSuccessMessage('');
+
+    const requestData = {
+      application_id: application.id,
+    };
+
+    try {
+      const response = await postData(
+        token,
+        '/api/generate_terms_of_business_pdf/',
+        requestData
+      );
+
+      if (response && response.status === 200 && response.data.success) {
+        setSuccessMessage(
+          response.data.message ||
+            'Terms of Business PDF generated and saved successfully'
+        );
+        setRefresh(!refresh);
+      } else {
+        setErrors(['Failed to generate Terms of Business document']);
+      }
+    } catch (error) {
+      console.error('Error generating Terms of Business:', error);
+      setErrors([
+        'An error occurred while generating the Terms of Business document',
+      ]);
+    } finally {
+      setIsGeneratingTermsOfBusiness(false);
+    }
+  };
+
+  const generateSECCIHandler = async () => {
+    if (hasSECCI) return;
+
+    setIsGeneratingSECCI(true);
+    setErrors([]);
+    setSuccessMessage('');
+
+    const requestData = {
+      application_id: application.id,
+      fee_agreed_for_undertaking: fee,
+    };
+
+    try {
+      const response = await postData(
+        token,
+        '/api/generate_secci_pdf/',
+        requestData
+      );
+
+      if (response && response.status === 200 && response.data.success) {
+        setSuccessMessage(
+          response.data.message ||
+            'SECCI Form PDF generated and saved successfully'
+        );
+        setRefresh(!refresh);
+      } else {
+        setErrors(['Failed to generate SECCI Form document']);
+      }
+    } catch (error) {
+      console.error('Error generating SECCI Form:', error);
+      setErrors(['An error occurred while generating the SECCI Form document']);
+    } finally {
+      setIsGeneratingSECCI(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -398,10 +484,133 @@ const ManageDocumentsModal = ({
                   <TemplateDocumentsSection
                     hasUndertaking={hasUndertaking}
                     hasLoanAgreement={hasLoanAgreement}
+                    hasTermsOfBusiness={hasTermsOfBusiness}
+                    hasSECCI={hasSECCI}
                     isGeneratingUndertaking={isGeneratingUndertaking}
                     isGeneratingAgreement={isGeneratingAgreement}
+                    isGeneratingTermsOfBusiness={isGeneratingTermsOfBusiness}
+                    isGeneratingSECCI={isGeneratingSECCI}
                     onGenerateUndertaking={generateUndertakingHandler}
                     onGenerateAgreement={generateAdvancementAgreementHandler}
+                    onGenerateTermsOfBusiness={generateTermsOfBusinessHandler}
+                    onGenerateSECCI={generateSECCIHandler}
+                  />
+
+                  {/* Manual Upload Section */}
+                  <div className='mb-4'>
+                    <div
+                      className='card border-0 shadow-sm'
+                      style={{
+                        borderRadius: '20px',
+                        background:
+                          'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                        border: '2px solid #e2e8f0',
+                      }}
+                    >
+                      <div
+                        className='card-header border-0 pb-0'
+                        style={{ background: 'transparent' }}
+                      >
+                        <div className='d-flex align-items-center gap-3'>
+                          <div
+                            className='d-flex align-items-center justify-content-center'
+                            style={{
+                              width: '48px',
+                              height: '48px',
+                              background:
+                                'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                              borderRadius: '16px',
+                              color: 'white',
+                            }}
+                          >
+                            <svg
+                              width='24'
+                              height='24'
+                              fill='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z' />
+                              <polyline points='14,2 14,8 20,8' />
+                              <line x1='16' y1='13' x2='8' y2='13' />
+                              <line x1='16' y1='17' x2='8' y2='17' />
+                              <polyline points='10,9 9,9 8,9' />
+                            </svg>
+                          </div>
+                          <div>
+                            <h5
+                              className='mb-1 fw-bold'
+                              style={{ color: '#1e293b' }}
+                            >
+                              Manual Document Upload
+                            </h5>
+                            <p className='mb-0 text-muted small'>
+                              Upload pre-signed or wet ink signed documents
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className='card-body pt-3'>
+                        <div className='row align-items-center'>
+                          <div className='col-md-8'>
+                            <p className='mb-0 text-muted small lh-base'>
+                              Use this feature when documents have been
+                              physically signed outside the system, or when
+                              digital signing is not preferred by the signatory.
+                            </p>
+                          </div>
+                          <div className='col-md-4 text-md-end mt-3 mt-md-0'>
+                            <button
+                              className='btn fw-semibold px-4 py-2'
+                              style={{
+                                background:
+                                  'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '16px',
+                                boxShadow: '0 8px 32px rgba(139, 92, 246, 0.3)',
+                                transition: 'all 0.3s ease',
+                              }}
+                              onClick={() => setShowManualUploadModal(true)}
+                              onMouseEnter={(e) => {
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow =
+                                  '0 12px 40px rgba(139, 92, 246, 0.4)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow =
+                                  '0 8px 32px rgba(139, 92, 246, 0.3)';
+                              }}
+                            >
+                              <div className='d-flex align-items-center gap-2'>
+                                <svg
+                                  width='20'
+                                  height='20'
+                                  fill='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z' />
+                                  <polyline points='14,2 14,8 20,8' />
+                                  <line x1='12' y1='18' x2='12' y2='12' />
+                                  <line x1='9' y1='15' x2='15' y2='15' />
+                                </svg>
+                                Upload Document
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Manual Upload Modal */}
+                  <ManualDocumentUploadModal
+                    isOpen={showManualUploadModal}
+                    onClose={() => setShowManualUploadModal(false)}
+                    applicationId={applicationId}
+                    onSuccess={() => {
+                      setSuccessMessage('Document uploaded successfully');
+                      setRefresh(!refresh);
+                    }}
                   />
 
                   {/* Error Messages */}
@@ -421,6 +630,8 @@ const ManageDocumentsModal = ({
                   currentRequirements={currentRequirements}
                   hasUndertaking={hasUndertaking}
                   hasLoanAgreement={hasLoanAgreement}
+                  hasTermsOfBusiness={hasTermsOfBusiness}
+                  hasSECCI={hasSECCI}
                 />
               </div>
             ) : (
