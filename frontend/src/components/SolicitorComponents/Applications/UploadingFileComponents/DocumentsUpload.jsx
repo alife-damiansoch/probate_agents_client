@@ -337,10 +337,143 @@ const DocumentsUpload = ({
   };
 
   // Tooltip logic
+  // Updated handleMouseEnter function in DocumentsUpload component
   const handleMouseEnter = async (e, doc) => {
     if (doc.is_signed) {
       setCurrentHoveredDocId(doc.id);
       setTooltipVisible(true);
+
+      // Check if this is a manually uploaded document
+      if (doc.is_manual_upload) {
+        const content = `
+        <div style="text-align: center; padding: 8px;">
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+            <div style="
+              width: 48px; 
+              height: 48px; 
+              background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); 
+              border-radius: 16px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              color: white;
+              box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+            ">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
+              </svg>
+            </div>
+          </div>
+          <h4 style="
+            color: #7c3aed; 
+            margin: 0 0 8px 0; 
+            font-weight: 700; 
+            font-size: 16px;
+            letter-spacing: 0.5px;
+          ">Manual Upload</h4>
+          <p style="
+            color: #6b46c1; 
+            margin: 0 0 12px 0; 
+            font-size: 14px; 
+            line-height: 1.4;
+            font-weight: 500;
+          ">Wet Ink Signature Document</p>
+          
+          <div style="
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.15) 100%);
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+          ">
+            <p style="
+              color: #553c9a; 
+              margin: 0; 
+              font-size: 13px; 
+              line-height: 1.4;
+              font-weight: 500;
+            ">
+              This document was physically signed with wet ink and uploaded manually to the system.
+            </p>
+          </div>
+          
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;">
+            <div style="
+              width: 20px; 
+              height: 20px; 
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+              border-radius: 50%; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+            ">
+              <svg width="12" height="12" fill="white" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span style="
+              color: #059669; 
+              font-size: 12px; 
+              font-weight: 600; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px;
+            ">Verified Upload</span>
+          </div>
+          
+          <div style="
+            margin-top: 16px; 
+            padding-top: 12px; 
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+          ">
+            <div style="margin-bottom: 4px;">
+              <p style="
+                color: #8b5cf6; 
+                margin: 0; 
+                font-size: 11px; 
+                font-weight: 500;
+                opacity: 0.8;
+              ">
+                Uploaded: ${new Date(doc.created_at).toLocaleDateString(
+                  'en-US',
+                  {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }
+                )}
+              </p>
+            </div>
+            ${
+              doc.uploaded_by_email
+                ? `
+              <div>
+                <p style="
+                  color: #8b5cf6; 
+                  margin: 0; 
+                  font-size: 10px; 
+                  font-weight: 500;
+                  opacity: 0.7;
+                ">
+                  By: ${doc.uploaded_by_email}
+                </p>
+              </div>
+            `
+                : ''
+            }
+          </div>
+        </div>
+      `;
+        setTooltipContent(content);
+        return;
+      }
+
+      // Original digital signature tooltip logic for non-manual uploads
       setTooltipContent('Fetching signing details...');
       const filePath = doc.document;
       const fileName = filePath.split('/').pop();
@@ -351,32 +484,207 @@ const DocumentsUpload = ({
         const docData = response.data;
 
         const content = `
-          <p><strong>Document Signing Details:</strong></p>
-          <p style="margin: 2px 10px 0; color: ${
-            docData.country !== 'Ireland' ? 'red' : 'black'
-          };">Country: ${docData.country || 'N/A'}</p>
-          <p style="margin: 1px 10px 0;">Region name: ${
-            docData.region_name || 'N/A'
-          }</p>
-          <p style="margin: 1px 10px 0;">City: ${docData.city || 'N/A'}</p>
-          <p style="margin: 1px 10px 0;">ISP: ${docData.isp || 'N/A'}</p>
-          <p style="margin: 1px 10px 0; color: ${
-            docData.is_proxy ? 'red' : 'black'
-          };">Proxy: ${docData.is_proxy ? 'Yes' : 'No'}</p>
-          <p style="margin: 1px 10px 0; color: ${
-            docData.is_proxy ? 'red' : 'black'
-          };">Proxy Type: ${docData.type || 'N/A'}</p> <br/>
-          <p style="margin: 1px 10px 0;">Logged in user: ${
-            docData.signing_user_email || 'N/A'
-          }</p>
-          <p style="margin: 1px 10px 0;">${getSignerDisplayName(
-            doc.who_needs_to_sign
-          )} full name: ${docData.solicitor_full_name || 'N/A'}</p>
-        `;
+        <div style="text-align: center; padding: 8px; min-width: 260px;">
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+            <div style="
+              width: 40px; 
+              height: 40px; 
+              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+              border-radius: 12px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              color: white;
+              box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+            ">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          
+          <h4 style="
+            color: #1e40af; 
+            margin: 0 0 8px 0; 
+            font-weight: 700; 
+            font-size: 14px;
+            letter-spacing: 0.3px;
+          ">Digital Signature</h4>
+          
+          <div style="
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(29, 78, 216, 0.1) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 12px;
+            padding: 10px;
+            margin: 8px 0;
+            text-align: left;
+          ">
+            <div style="display: grid; gap: 6px; font-size: 11px;">
+              
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #64748b; font-weight: 500;">Country</span>
+                <span style="color: ${
+                  docData.country !== 'Ireland' ? '#dc2626' : '#1e293b'
+                }; font-weight: 600;">
+                  ${docData.country || 'N/A'}
+                </span>
+              </div>
+
+              <div style="height: 1px; background: rgba(59, 130, 246, 0.1);"></div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #64748b; font-weight: 500;">Location</span>
+                <span style="color: #1e293b; font-weight: 600; text-align: right; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${docData.city || 'N/A'}, ${docData.region_name || 'N/A'}
+                </span>
+              </div>
+
+              <div style="height: 1px; background: rgba(59, 130, 246, 0.1);"></div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #64748b; font-weight: 500;">ISP</span>
+                <span style="color: #1e293b; font-weight: 600; text-align: right; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${docData.isp || 'N/A'}
+                </span>
+              </div>
+
+              <div style="height: 1px; background: rgba(59, 130, 246, 0.1);"></div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #64748b; font-weight: 500;">Proxy</span>
+                <span style="color: ${
+                  docData.is_proxy ? '#dc2626' : '#059669'
+                }; font-weight: 600;">
+                  ${
+                    docData.is_proxy
+                      ? `Yes${docData.type ? ` (${docData.type})` : ''}`
+                      : 'No'
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style="
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: 12px;
+            padding: 10px;
+            margin: 8px 0;
+            text-align: left;
+          ">
+            <div style="display: grid; gap: 6px; font-size: 11px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #6b7280; font-weight: 500;">User</span>
+                <span style="color: #047857; font-weight: 600; text-align: right; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${docData.signing_user_email || 'N/A'}
+                </span>
+              </div>
+              
+              <div style="height: 1px; background: rgba(16, 185, 129, 0.1);"></div>
+              
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #6b7280; font-weight: 500;">${getSignerDisplayName(
+                  doc.who_needs_to_sign
+                )}</span>
+                <span style="color: #047857; font-weight: 600; text-align: right; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${docData.solicitor_full_name || 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 8px;">
+            <div style="
+              width: 12px; 
+              height: 12px; 
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+              border-radius: 50%;
+            "></div>
+            <span style="
+              color: #3b82f6; 
+              font-size: 9px; 
+              font-weight: 600;
+              opacity: 0.8;
+            ">Verified & Logged</span>
+          </div>
+          
+          <div style="
+            margin-top: 8px; 
+            padding-top: 6px; 
+            border-top: 1px solid rgba(59, 130, 246, 0.15);
+            text-align: center;
+          ">
+            <div style="margin-bottom: 3px;">
+              <span style="
+                color: #6b7280; 
+                font-size: 9px; 
+                font-weight: 500;
+                opacity: 0.7;
+              ">
+                Signed: ${new Date(
+                  docData.created_at || doc.created_at
+                ).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
+            ${
+              doc.uploaded_by_email
+                ? `
+              <div>
+                <span style="
+                  color: #6b7280; 
+                  font-size: 8px; 
+                  font-weight: 500;
+                  opacity: 0.6;
+                ">
+                  Uploaded by: ${doc.uploaded_by_email}
+                </span>
+              </div>
+            `
+                : ''
+            }
+          </div>
+        </div>
+      `;
 
         setTooltipContent(content);
       } catch (error) {
         console.error('Error getting file info:', error);
+
+        // Fallback content for digital signatures when API fails
+        const content = `
+        <div style="text-align: center; padding: 8px;">
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+            <div style="
+              width: 48px; 
+              height: 48px; 
+              background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
+              border-radius: 16px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              color: white;
+            ">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+          <h4 style="color: #dc2626; margin: 0 0 8px 0; font-weight: 700; font-size: 16px;">
+            Signature Details Unavailable
+          </h4>
+          <p style="color: #991b1b; margin: 0; font-size: 14px; line-height: 1.4;">
+            Unable to retrieve digital signature information for this document.
+          </p>
+        </div>
+      `;
+        setTooltipContent(content);
       }
     }
   };
