@@ -309,7 +309,7 @@ export const SegmentCard = ({ segment, formatMoney, currency_sign }) => {
                         marginBottom: '4px',
                       }}
                     >
-                      3. Daily Compound (0.07%)
+                      3. Daily Simple (0.07%)
                     </div>
                     <div
                       style={{

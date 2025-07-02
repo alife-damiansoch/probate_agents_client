@@ -1,15 +1,15 @@
-import  { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import BackToApplicationsIcon from '../../../GenericComponents/BackToApplicationsIcon';
+import LoadingComponent from '../../../GenericComponents/LoadingComponent';
 import {
   fetchData,
   patchData,
 } from '../../../GenericFunctions/AxiosGenericFunctions';
-import LoadingComponent from '../../../GenericComponents/LoadingComponent';
-import Advancement from '../Advancement';
 import renderErrors from '../../../GenericFunctions/HelperGenericFunctions';
+import Advancement from '../Advancement';
 import ConfirmSettleAdvance from './ConfirmSettleAdvance';
-import BackToApplicationsIcon from '../../../GenericComponents/BackToApplicationsIcon';
 
 const SettleAdvancementComponent = () => {
   const token = Cookies.get('auth_token_agents');
@@ -43,8 +43,6 @@ const SettleAdvancementComponent = () => {
     };
 
     fetchApplications();
-
-     
   }, [token, advancementId]); // Dependencies: token, refresh (re-fetch when these change)
 
   const handleSettleClick = () => {
@@ -98,7 +96,7 @@ const SettleAdvancementComponent = () => {
   return (
     <>
       <BackToApplicationsIcon backUrl={-1} />
-      {advancement && advancement.current_balance > 0 ? (
+      {advancement?.loanbook_data?.total_due > 0 ? (
         <div className='alert alert-danger'>
           <div className={`alert text-center text-danger`} role='alert'>
             {renderErrors({

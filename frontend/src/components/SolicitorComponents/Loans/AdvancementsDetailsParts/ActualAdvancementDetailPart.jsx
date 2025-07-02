@@ -70,8 +70,9 @@ const ActualAdvancementDetailPart = ({
                       style={{ color: '#1e40af', fontSize: '1.1rem' }}
                     >
                       {formatMoney(
-                        advancement?.loanbook_data?.total_due ||
-                          advancement.current_balance,
+                        advancement?.loanbook_data
+                          ? advancement.loanbook_data.total_due
+                          : advancement.current_balance,
                         advancement.currency_sign
                       )}
                     </span>
@@ -146,10 +147,11 @@ const ActualAdvancementDetailPart = ({
                       }}
                     >
                       {formatMoney(
-                        advancement?.loanbook_data?.total_due +
-                          advancement?.amount_paid -
-                          advancement?.loanbook_data?.initial_amount ||
-                          advancement.fee_agreed,
+                        advancement?.loanbook_data
+                          ? advancement.loanbook_data.total_due +
+                              advancement.amount_paid -
+                              advancement.loanbook_data.initial_amount
+                          : advancement.fee_agreed,
                         advancement.currency_sign
                       )}
                     </span>
@@ -241,8 +243,9 @@ const ActualAdvancementDetailPart = ({
                       style={{ color: '#374151', fontSize: '1rem' }}
                     >
                       {formatMoney(
-                        advancement?.loanbook_data?.initial_amount ||
-                          advancement.amount_agreed,
+                        advancement?.loanbook_data
+                          ? advancement.loanbook_data.initial_amount
+                          : advancement.amount_agreed,
                         advancement.currency_sign
                       )}
                     </span>

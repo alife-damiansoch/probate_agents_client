@@ -350,8 +350,9 @@ const Advancement = ({ loan }) => {
                       >
                         <strong>Balance:</strong>{' '}
                         {formatMoney(
-                          loan?.loanbook_data?.total_due ||
-                            loan.current_balance,
+                          loan?.loanbook_data
+                            ? loan.loanbook_data.total_due
+                            : loan.current_balance,
                           loan.currency_sign
                         )}
                       </td>

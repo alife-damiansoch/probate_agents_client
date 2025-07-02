@@ -228,13 +228,13 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
       parseFloat(statementData.daily_interest_total) > 0
         ? `
     <div class="breakdown-card">
-        <div class="breakdown-title">Compound Daily Interest (After Year 1)</div>
+        <div class="breakdown-title">Daily Simple Interest (After Year 1)</div>
         <div class="breakdown-amount">${formatMoney(
           statementData.daily_interest_total,
           advancement.currency_sign
         )}</div>
         <div style="text-align: center; color: #a16207; font-size: 14px;">
-            Compounded at ${dailyFeePercentage}% per day beyond first year
+            Simple interest at ${dailyFeePercentage}% per day beyond first year
         </div>
     </div>
     `
@@ -248,11 +248,15 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
         <div class="section-header">💳 Payment History</div>
         <div class="section-content">
             ${statementData.transactions
+              .slice()
+              .reverse()
               .map(
                 (transaction, index) => `
                 <div class="payment-card">
                     <div>
-                        <div class="payment-info">Payment #${index + 1}</div>
+                        <div class="payment-info">Payment #${
+                          statementData.transactions.length - index
+                        }</div>
                         <div class="payment-date">${formatDate(
                           transaction.date
                         )}</div>
@@ -290,6 +294,8 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                 </thead>
                 <tbody>
                     ${statementData.daily_breakdown
+                      .slice()
+                      .reverse()
                       .map(
                         (day) => `
                         <tr>
@@ -488,7 +494,7 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                 fontSize: '0.9rem',
               }}
             >
-              Payment #{index + 1}
+              Payment #{statementData.transactions.length - index}
             </div>
             <div style={{ fontSize: '0.8rem', color: '#15803d' }}>
               {transaction.description || 'Payment transaction'}
@@ -578,7 +584,7 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
               </div>
             </div>
 
-            {/* PDF Export Actions - Always show now */}
+            {/* PDF Export Actions */}
             <div className='d-flex align-items-center gap-3'>
               {/* Secondary Actions */}
               <div className='d-flex gap-2'>
@@ -859,7 +865,7 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                           margin: 0,
                         }}
                       >
-                        Compound Daily Interest (After Year 1)
+                        Daily Simple Interest (After Year 1)
                       </h5>
                       <p
                         style={{
@@ -868,7 +874,7 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                           margin: 0,
                         }}
                       >
-                        {dailyFeePercentage}% compound interest per day beyond
+                        {dailyFeePercentage}% simple interest per day beyond
                         first year
                       </p>
                     </div>
@@ -882,7 +888,7 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                         marginBottom: '4px',
                       }}
                     >
-                      TOTAL COMPOUND INTEREST
+                      TOTAL SIMPLE INTEREST
                     </div>
                     <div
                       style={{
@@ -897,7 +903,7 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                       )}
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#a16207' }}>
-                      Compounded at {dailyFeePercentage}% per day
+                      Simple interest at {dailyFeePercentage}% per day
                     </div>
                   </div>
 
@@ -932,13 +938,13 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                     >
                       <strong>Total Amount Due</strong> = Initial Advancement
                       Amount + Yearly Interest ({initialFeePercentage}%) +
-                      Compound Daily Interest + Exit Fee ({exitFeePercentage}%)
+                      Simple Daily Interest + Exit Fee ({exitFeePercentage}%)
                       <br />
                       <span
                         style={{ fontSize: '0.75rem', fontStyle: 'italic' }}
                       >
-                        Daily compound interest applies only after the first
-                        year at {dailyFeePercentage}% per day
+                        Daily simple interest applies only after the first year
+                        at {dailyFeePercentage}% per day
                       </span>
                     </div>
                   </div>
@@ -1039,124 +1045,131 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {statementData.daily_breakdown.map((day, index) => (
-                      <tr
-                        key={index}
-                        style={{
-                          backgroundColor:
-                            day.type === 'Payment'
-                              ? '#f0fdf4'
-                              : day.type === 'Exit Fee'
-                              ? '#fef2f2'
-                              : day.type === 'Yearly Interest Applied'
-                              ? '#eff6ff'
-                              : day.type === 'Daily Compound Interest'
-                              ? '#fefce8'
-                              : day.type === 'LOAN SETTLED'
-                              ? '#f0fdf4'
-                              : 'transparent',
-                        }}
-                      >
-                        <td
+                    {statementData.daily_breakdown
+                      .slice()
+                      .reverse()
+                      .map((day, index) => (
+                        <tr
+                          key={index}
                           style={{
-                            padding: '8px 12px',
-                            fontSize: '0.9rem',
-                            fontWeight: '500',
+                            backgroundColor:
+                              day.type === 'Payment'
+                                ? '#f0fdf4'
+                                : day.type === 'Exit Fee'
+                                ? '#fef2f2'
+                                : day.type === 'Yearly Interest Applied'
+                                ? '#eff6ff'
+                                : day.type === 'Daily Simple Interest'
+                                ? '#fefce8'
+                                : day.type === 'LOAN SETTLED'
+                                ? '#f0fdf4'
+                                : 'transparent',
                           }}
                         >
-                          {day.day}
-                        </td>
-                        <td style={{ padding: '8px 12px', fontSize: '0.9rem' }}>
-                          {formatDate(day.date)}
-                        </td>
-                        <td style={{ padding: '8px 12px', fontSize: '0.9rem' }}>
-                          <span
+                          <td
                             style={{
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: '600',
-                              backgroundColor:
-                                day.type === 'Payment'
-                                  ? '#dcfce7'
-                                  : day.type === 'Exit Fee'
-                                  ? '#fee2e2'
-                                  : day.type === 'Yearly Interest Applied'
-                                  ? '#dbeafe'
-                                  : day.type === 'Daily Compound Interest'
-                                  ? '#fef3c7'
-                                  : day.type === 'LOAN SETTLED'
-                                  ? '#bbf7d0'
-                                  : '#f3f4f6',
-                              color:
-                                day.type === 'Payment'
-                                  ? '#166534'
-                                  : day.type === 'Exit Fee'
-                                  ? '#dc2626'
-                                  : day.type === 'Yearly Interest Applied'
-                                  ? '#1d4ed8'
-                                  : day.type === 'Daily Compound Interest'
-                                  ? '#d97706'
-                                  : day.type === 'LOAN SETTLED'
-                                  ? '#166534'
-                                  : '#6b7280',
+                              padding: '8px 12px',
+                              fontSize: '0.9rem',
+                              fontWeight: '500',
                             }}
                           >
-                            {day.type}
-                          </span>
-                        </td>
-                        <td
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '0.9rem',
-                            fontWeight: '500',
-                          }}
-                        >
-                          {day.interest_rate || 'N/A'}
-                        </td>
-                        <td
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                          }}
-                        >
-                          {day.payment_amount ? (
-                            <span style={{ color: '#16a34a' }}>
-                              -
-                              {formatMoney(
-                                day.payment_amount,
-                                advancement.currency_sign
-                              )}
+                            {day.day}
+                          </td>
+                          <td
+                            style={{ padding: '8px 12px', fontSize: '0.9rem' }}
+                          >
+                            {formatDate(day.date)}
+                          </td>
+                          <td
+                            style={{ padding: '8px 12px', fontSize: '0.9rem' }}
+                          >
+                            <span
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                backgroundColor:
+                                  day.type === 'Payment'
+                                    ? '#dcfce7'
+                                    : day.type === 'Exit Fee'
+                                    ? '#fee2e2'
+                                    : day.type === 'Yearly Interest Applied'
+                                    ? '#dbeafe'
+                                    : day.type === 'Daily Simple Interest'
+                                    ? '#fef3c7'
+                                    : day.type === 'LOAN SETTLED'
+                                    ? '#bbf7d0'
+                                    : '#f3f4f6',
+                                color:
+                                  day.type === 'Payment'
+                                    ? '#166534'
+                                    : day.type === 'Exit Fee'
+                                    ? '#dc2626'
+                                    : day.type === 'Yearly Interest Applied'
+                                    ? '#1d4ed8'
+                                    : day.type === 'Daily Simple Interest'
+                                    ? '#d97706'
+                                    : day.type === 'LOAN SETTLED'
+                                    ? '#166534'
+                                    : '#6b7280',
+                              }}
+                            >
+                              {day.type}
                             </span>
-                          ) : day.interest_amount ? (
-                            <span style={{ color: '#dc2626' }}>
-                              +
-                              {formatMoney(
-                                day.interest_amount,
-                                advancement.currency_sign
-                              )}
-                            </span>
-                          ) : (
-                            <span style={{ color: '#6b7280' }}>
-                              {advancement.currency_sign}0.00
-                            </span>
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '0.9rem',
-                            fontWeight: '700',
-                          }}
-                        >
-                          {formatMoney(
-                            day.running_total,
-                            advancement.currency_sign
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td
+                            style={{
+                              padding: '8px 12px',
+                              fontSize: '0.9rem',
+                              fontWeight: '500',
+                            }}
+                          >
+                            {day.interest_rate || 'N/A'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '8px 12px',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                            }}
+                          >
+                            {day.payment_amount ? (
+                              <span style={{ color: '#16a34a' }}>
+                                -
+                                {formatMoney(
+                                  day.payment_amount,
+                                  advancement.currency_sign
+                                )}
+                              </span>
+                            ) : day.interest_amount ? (
+                              <span style={{ color: '#dc2626' }}>
+                                +
+                                {formatMoney(
+                                  day.interest_amount,
+                                  advancement.currency_sign
+                                )}
+                              </span>
+                            ) : (
+                              <span style={{ color: '#6b7280' }}>
+                                {advancement.currency_sign}0.00
+                              </span>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '8px 12px',
+                              fontSize: '0.9rem',
+                              fontWeight: '700',
+                            }}
+                          >
+                            {formatMoney(
+                              day.running_total,
+                              advancement.currency_sign
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -1173,13 +1186,16 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
                   Payment History
                 </h5>
               </div>
-              {statementData.transactions.map((transaction, index) => (
-                <TransactionCard
-                  key={index}
-                  transaction={transaction}
-                  index={index}
-                />
-              ))}
+              {statementData.transactions
+                .slice()
+                .reverse()
+                .map((transaction, index) => (
+                  <TransactionCard
+                    key={index}
+                    transaction={transaction}
+                    index={index}
+                  />
+                ))}
             </div>
           )}
 
@@ -1223,26 +1239,26 @@ const StatementDisplay = ({ statement, advancement, onBack }) => {
       </div>
 
       <style>{`
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
-        }
+       @keyframes spin {
+         0% {
+           transform: rotate(0deg);
+         }
+         100% {
+           transform: rotate(360deg);
+         }
+       }
 
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+       @keyframes fadeIn {
+         from {
+           opacity: 0;
+           transform: translateY(-10px);
+         }
+         to {
+           opacity: 1;
+           transform: translateY(0);
+         }
+       }
+     `}</style>
     </div>
   );
 };
