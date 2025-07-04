@@ -1,11 +1,16 @@
+// Management.jsx - Updated with CCR functionality
+import { FileText } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import UserManagement from './UserManagement/UserManagement';
-import FileManager from './DocumentsForDownloadComponent/FileManager';
+import CCRModal from './CCR/CCRModal'; // Add this import
 import DefaultAssigmentManager from './DefaultAssigmentManager.jsx/DefaultAssigmentManager';
+import FileManager from './DocumentsForDownloadComponent/FileManager';
+import UserManagement from './UserManagement/UserManagement';
 
 const Management = () => {
   const [activeSection, setActiveSection] = useState('agents');
+  const [showCCRModal, setShowCCRModal] = useState(false); // Add CCR modal state
+
   return (
     <div>
       <nav className='navbar navbar-expand-lg bg-body my-5'>
@@ -22,8 +27,8 @@ const Management = () => {
             <span className='navbar-toggler-icon'></span>
           </button>
           <div className='collapse navbar-collapse' id='navbarColor04'>
-            <ul className='navbar-nav bg-body-tertiary '>
-              <li className='nav-item '>
+            <ul className='navbar-nav bg-body-tertiary'>
+              <li className='nav-item'>
                 <Link
                   className='btn btn-sm btn-outline-info mb-2'
                   onClick={() => {
@@ -33,7 +38,7 @@ const Management = () => {
                   Agents Management
                 </Link>
               </li>
-              <li className='nav-item '>
+              <li className='nav-item'>
                 <Link
                   className='btn btn-sm btn-outline-info mb-2'
                   onClick={() => {
@@ -53,13 +58,30 @@ const Management = () => {
                   Document For Download Management
                 </Link>
               </li>
+              {/* Add CCR Reporting button */}
+              <li className='nav-item'>
+                <Link
+                  className='btn btn-sm btn-outline-warning mb-2'
+                  onClick={() => {
+                    setShowCCRModal(true);
+                  }}
+                >
+                  <FileText className='me-2' size={16} />
+                  CCR Reporting
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
       </nav>
+
+      {/* Existing sections */}
       {activeSection === 'agents' && <UserManagement />}
       {activeSection === 'documents' && <FileManager />}
       {activeSection === 'default_assigment' && <DefaultAssigmentManager />}
+
+      {/* CCR Modal */}
+      <CCRModal show={showCCRModal} onHide={() => setShowCCRModal(false)} />
     </div>
   );
 };
