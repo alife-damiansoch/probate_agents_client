@@ -1,46 +1,44 @@
-import  { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
+  Navigate,
+  Route,
   BrowserRouter as Router,
   Routes,
-  Route,
-  Navigate,
   useLocation,
 } from 'react-router-dom';
-import { loginSuccess } from './store/authSlice';
 import './App.css';
 import './bootstrap.min.css';
-import NavBar from './components/NavBar/NavBar';
-import LoginComponent from './components/Login/LoginComponent';
-import ApplicationDetails from './components/SolicitorComponents/Applications/ApplicationDetails';
+import Communication from './components/Communication/Communication';
 import FooterComponent from './components/GenericComponents/FooterComponent';
-import AddApplication from './components/SolicitorComponents/Applications/AddApplication';
-import UploadNewDocument from './components/SolicitorComponents/Applications/UploadingFileComponents/UploadNewDocument';
+import renderErrors from './components/GenericFunctions/HelperGenericFunctions';
+import AutoLogoutComponent from './components/Login/AutoLogoutComponent';
+import LoginComponent from './components/Login/LoginComponent';
 import RegisterComponent from './components/Login/RegisterComponent';
-import UserProfile from './components/SolicitorComponents/UserProfileComponent';
-import UpdatePasswordComponent from './components/SolicitorComponents/UpdatePasswordComponent';
-import { fetchUser } from './store/userSlice';
-import ApproveApplication from './components/SolicitorComponents/Applications/ApproveApplication/ApproveApplication';
-import AdvancementDetail from './components/SolicitorComponents/Loans/AdvancementDetail';
-import TransactionsComponent from './components/SolicitorComponents/Loans/ActionsComponents/Transactions/TransactionsComponent';
-import SettleAdvancementComponent from './components/SolicitorComponents/Loans/ActionsComponents/SettleAdvancementComponent';
-import ExtentionsComponent from './components/SolicitorComponents/Loans/ActionsComponents/Extentions/ExtentionsComponent';
-import FetchingApplicationsComponent from './components/SolicitorComponents/Applications/FetchingApplicationsComponent';
-import FetchAdvancementsComponent from './components/SolicitorComponents/Loans/FetchAdvancementsComponent';
-import AllNotificationComponent from './components/SolicitorComponents/Notifications/AllNotificationComponent';
-import Solicitors from './components/SolicitorComponents/Applications/SolicitorComponent/Solicitors';
+import NavBar from './components/NavBar/NavBar';
+import AddApplication from './components/SolicitorComponents/Applications/AddApplication';
+import ApplicationGlobalSearch from './components/SolicitorComponents/Applications/AplicationGlobalSearch/ApplicationGlobalSearch';
+import ApplicationDetails from './components/SolicitorComponents/Applications/ApplicationDetails';
 import AdvancementDetailsConfirm from './components/SolicitorComponents/Applications/ApplicationDocumentsComponents/Advancement/AdvancementDetailsConfirm';
+import ApproveApplication from './components/SolicitorComponents/Applications/ApproveApplication/ApproveApplication';
+import FetchingApplicationsComponent from './components/SolicitorComponents/Applications/FetchingApplicationsComponent';
+import Solicitors from './components/SolicitorComponents/Applications/SolicitorComponent/Solicitors';
+import UploadNewDocument from './components/SolicitorComponents/Applications/UploadingFileComponents/UploadNewDocument';
+import ExtentionsComponent from './components/SolicitorComponents/Loans/ActionsComponents/Extentions/ExtentionsComponent';
+import SettleAdvancementComponent from './components/SolicitorComponents/Loans/ActionsComponents/SettleAdvancementComponent';
+import TransactionsComponent from './components/SolicitorComponents/Loans/ActionsComponents/Transactions/TransactionsComponent';
+import AdvancementDetail from './components/SolicitorComponents/Loans/AdvancementDetail';
+import AdvancementGlobalSearch from './components/SolicitorComponents/Loans/AdvancementGlobalSearch/AdvancementGlobalSearch';
+import FetchAdvancementsComponent from './components/SolicitorComponents/Loans/FetchAdvancementsComponent';
 import FileManager from './components/SolicitorComponents/Management/DocumentsForDownloadComponent/FileManager';
 import Management from './components/SolicitorComponents/Management/Management';
-import Communication from './components/Communication/Communication';
-import ApplicationGlobalSearch from './components/SolicitorComponents/Applications/AplicationGlobalSearch/ApplicationGlobalSearch';
-import AdvancementGlobalSearch from './components/SolicitorComponents/Loans/AdvancementGlobalSearch/AdvancementGlobalSearch';
-import AutoLogoutComponent from './components/Login/AutoLogoutComponent';
+import AllNotificationComponent from './components/SolicitorComponents/Notifications/AllNotificationComponent';
+import UpdatePasswordComponent from './components/SolicitorComponents/UpdatePasswordComponent';
+import UserProfile from './components/SolicitorComponents/UserProfileComponent';
+import { loginSuccess, logout } from './store/authSlice';
+import { clearUser, fetchUser } from './store/userSlice';
 import apiEventEmitter from './utils/eventEmitter';
-import { logout } from './store/authSlice';
-import { clearUser } from './store/userSlice';
-import renderErrors from './components/GenericFunctions/HelperGenericFunctions';
 
 function App() {
   const dispatch = useDispatch();
