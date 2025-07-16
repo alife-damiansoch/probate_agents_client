@@ -12,6 +12,7 @@ import {
   Loader2,
   Mail,
   Save,
+  Shield,
   Trash2,
   User,
   Users,
