@@ -21,6 +21,7 @@ import {
   fetchData,
   postData,
 } from '../../../GenericFunctions/AxiosGenericFunctions';
+import { getDocumentType } from '../../../GenericFunctions/HelperGenericFunctions';
 
 const EmailCommunicationsComponent = ({
   applicationId = 123,
@@ -37,6 +38,7 @@ const EmailCommunicationsComponent = ({
   const [emailsLoading, setEmailsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  console.log('DOCUMENTS', documents);
   // Updated CSS styles to match InternalFilesManager
   const styles = {
     container: {
@@ -590,14 +592,22 @@ const EmailCommunicationsComponent = ({
                                 />
                                 <div className='flex-grow-1'>
                                   <div className='text-white small'>
-                                    {doc.original_name}
+                                    {doc.original_name} <br />{' '}
+                                    <span
+                                      className=' text-warning text-decoration-underline'
+                                      style={{ fontSize: '0.75rem' }}
+                                    >
+                                      {getDocumentType(doc)}
+                                    </span>
                                   </div>
                                   {doc.file_size && (
                                     <div
                                       className='text-muted'
                                       style={{ fontSize: '0.75rem' }}
                                     >
-                                      {formatFileSize(doc.file_size)}
+                                      <span>
+                                        {formatFileSize(doc.file_size)}
+                                      </span>
                                     </div>
                                   )}
                                 </div>

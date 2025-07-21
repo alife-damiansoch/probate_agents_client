@@ -147,3 +147,12 @@ export function formatMoney(amount, currency = '') {
 
   return `${currency}${formatted}`;
 }
+
+export const getDocumentType = (doc) => {
+  if (doc.is_undertaking) return 'Solicitor Undertaking';
+  if (doc.is_loan_agreement) return 'Advancement Agreement';
+  if (doc.is_secci) return 'SECCI';
+  if (doc.is_terms_of_business) return 'Terms of Business';
+  if (doc.is_manual_upload) return 'Manual Upload';
+  return 'Document';
+};

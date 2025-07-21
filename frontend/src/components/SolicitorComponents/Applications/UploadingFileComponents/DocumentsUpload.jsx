@@ -10,7 +10,9 @@ import {
   downloadFileAxios,
   fetchData,
 } from '../../../GenericFunctions/AxiosGenericFunctions.jsx';
-import renderErrors from '../../../GenericFunctions/HelperGenericFunctions.jsx';
+import renderErrors, {
+  getDocumentType,
+} from '../../../GenericFunctions/HelperGenericFunctions.jsx';
 import ManageDocumentsButton from './ManageDocumentsButton.jsx';
 import ManageDocumentsModal from './ManageDocumentsModal.jsx';
 import SolicitorNotificationButton from './SolicitorNotificationButton.jsx';
@@ -223,11 +225,11 @@ const DocumentsUpload = ({
   };
 
   // Helper functions
-  const getDocumentType = (doc) => {
-    if (doc.is_undertaking) return 'Solicitor Undertaking';
-    if (doc.is_loan_agreement) return 'Advancement Agreement';
-    return 'Document';
-  };
+  // const getDocumentType = (doc) => {
+  //   if (doc.is_undertaking) return 'Solicitor Undertaking';
+  //   if (doc.is_loan_agreement) return 'Advancement Agreement';
+  //   return 'Document';
+  // };
 
   const getDocumentTypeStyle = (doc) => {
     if (doc.is_undertaking) {
@@ -1043,13 +1045,13 @@ const DocumentsUpload = ({
                         className='mb-0 fw-bold text-truncate'
                         style={{ color: typeStyle.color, fontSize: '0.9rem' }}
                       >
-                        {getDocumentType(doc)}
+                        {doc.original_name}
                       </h6>
                       <p
                         className='mb-0 text-truncate opacity-75'
                         style={{ fontSize: '0.7rem', color: typeStyle.color }}
                       >
-                        {doc.original_name}
+                        {getDocumentType(doc)}
                       </p>
                     </div>
                     {/* Signature Status Badge */}
