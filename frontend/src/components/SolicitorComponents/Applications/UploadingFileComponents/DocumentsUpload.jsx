@@ -13,6 +13,7 @@ import {
 import renderErrors, {
   getDocumentType,
 } from '../../../GenericFunctions/HelperGenericFunctions.jsx';
+import RequirementUploadModal from './ManageDocumentModalParts/RequirementUploadModal.jsx';
 import ManageDocumentsButton from './ManageDocumentsButton.jsx';
 import ManageDocumentsModal from './ManageDocumentsModal.jsx';
 import SolicitorNotificationButton from './SolicitorNotificationButton.jsx';
@@ -46,6 +47,10 @@ const DocumentsUpload = ({
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [currentHoveredDocId, setCurrentHoveredDocId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Manual requirements upload
+  const [showRequirementModal, setShowRequirementModal] = useState(false);
+  const [requirementForUpload, setRequirementForUpload] = useState(null);
 
   useEffect(() => {
     if (user && user.is_superuser) {
@@ -880,16 +885,22 @@ const DocumentsUpload = ({
                         />
                       </svg>
                     </div>
-                    <div className='flex-grow-1 min-w-0'>
-                      <div className='d-flex align-items-center justify-content-between'>
+                    <div className='flex-grow-1'>
+                      <div className='d-flex align-items-start justify-content-between mb-1'>
                         <h6
-                          className='mb-0 fw-semibold text-truncate'
-                          style={{ fontSize: '0.85rem', color: '#1e293b' }}
+                          className='mb-0 fw-semibold'
+                          style={{
+                            fontSize: '0.85rem',
+                            color: '#1e293b',
+                            lineHeight: '1.3',
+                            wordBreak: 'break-word',
+                            paddingRight: '8px',
+                          }}
                         >
                           {requirement.document_type.name}
                         </h6>
                         <span
-                          className='px-2 py-1 rounded-pill text-white'
+                          className='px-2 py-1 rounded-pill text-white flex-shrink-0'
                           style={{
                             backgroundColor: statusStyle.iconColor,
                             fontSize: '0.7rem',
@@ -912,6 +923,62 @@ const DocumentsUpload = ({
                         </p>
                       )}
                     </div>
+                    {/* Upload/Record Button */}
+                    {!requirement.is_uploaded && (
+                      <button
+                        className='btn btn-outline-secondary d-flex align-items-center'
+                        style={{
+                          borderRadius: '8px',
+                          fontSize: '0.7rem',
+                          padding: '2px 8px',
+                          minWidth: 70,
+                          opacity: 0.7,
+                          gap: '4px', // spacing between icon and text
+                          lineHeight: 1.2, // tighter vertical alignment
+                        }}
+                        title='Manual upload (not preferred)'
+                        onClick={() => {
+                          setRequirementForUpload(requirement);
+                          setShowRequirementModal(true);
+                        }}
+                        tabIndex={0}
+                      >
+                        {/* Subtle info/warning SVG icon */}
+                        <svg
+                          xmlns='http://www.w3.org/2000/svg'
+                          width='14'
+                          height='14'
+                          fill='none'
+                          viewBox='0 0 16 16'
+                        >
+                          <circle
+                            cx='8'
+                            cy='8'
+                            r='7'
+                            stroke='#888'
+                            strokeWidth='1.5'
+                            fill='none'
+                          />
+                          <rect
+                            x='7.25'
+                            y='4'
+                            width='1.5'
+                            height='5'
+                            rx='0.75'
+                            fill='#888'
+                          />
+                          <rect
+                            x='7.25'
+                            y='11'
+                            width='1.5'
+                            height='1.5'
+                            rx='0.75'
+                            fill='#888'
+                          />
+                        </svg>
+                        Upload
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -1042,8 +1109,15 @@ const DocumentsUpload = ({
                     </div>
                     <div className='flex-grow-1 min-w-0'>
                       <h6
-                        className='mb-0 fw-bold text-truncate'
-                        style={{ color: typeStyle.color, fontSize: '0.9rem' }}
+                        className='mb-0 fw-bold'
+                        style={{
+                          color: typeStyle.color,
+                          fontSize: '0.9rem',
+                          lineHeight: '1.3',
+                          wordBreak: 'break-word',
+                          paddingRight: '8px',
+                        }}
+                        title={doc.original_name} // Shows full name on hover
                       >
                         {doc.original_name}
                       </h6>
@@ -1056,7 +1130,7 @@ const DocumentsUpload = ({
                     </div>
                     {/* Signature Status Badge */}
                     <span
-                      className='px-2 py-1 rounded-pill d-flex align-items-center gap-1'
+                      className='px-2 py-1 rounded-pill d-flex align-items-center gap-1 flex-shrink-0'
                       style={{
                         backgroundColor: signatureStatus.backgroundColor,
                         color: signatureStatus.textColor,
@@ -1586,6 +1660,22 @@ const DocumentsUpload = ({
         onConfirm={(result) => handleConfirm(result)}
         onCancel={() => handleConfirm(false)}
       />
+
+      {showRequirementModal && requirementForUpload && (
+        <RequirementUploadModal
+          requirement={requirementForUpload}
+          applicationId={applicationId}
+          onClose={() => {
+            setShowRequirementModal(false);
+            setRequirementForUpload(null);
+          }}
+          onUploadComplete={() => {
+            setShowRequirementModal(false);
+            setRequirementForUpload(null);
+            setRefresh(!refresh); // Or call your refresh logic
+          }}
+        />
+      )}
     </div>
   );
 };
