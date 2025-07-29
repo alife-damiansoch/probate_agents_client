@@ -122,7 +122,7 @@ const TemplateDocumentsSection = ({
         />
 
         {/* Solicitor Undertaking Card */}
-        <TemplateDocumentCard
+        {/* <TemplateDocumentCard
           title='Solicitor Undertaking'
           description='Legal commitment document'
           icon={undertakingIcon}
@@ -136,7 +136,7 @@ const TemplateDocumentsSection = ({
             textColor: '#92400e',
             buttonBg: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
           }}
-        />
+        /> */}
 
         {/* Advancement Agreement Card */}
         <TemplateDocumentCard
