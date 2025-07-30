@@ -49,6 +49,7 @@ const RequirementUploadModal = ({
   };
 
   function buildCustomFilename(templateFilename, applicationId, realFile) {
+    if (!templateFilename || !applicationId || !realFile) return realFile.name;
     let base = templateFilename.replace(/\.[^/.]+$/, '');
     let ext = realFile.name.split('.').pop();
     return `${base}_${applicationId}.${ext}`;
