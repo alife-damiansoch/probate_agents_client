@@ -48,9 +48,22 @@ const RequirementUploadModal = ({
     setFile(f);
   };
 
-  function buildCustomFilename(templateFilename, applicationId, realFile) {
-    if (!templateFilename || !applicationId || !realFile) return realFile.name;
-    let base = templateFilename.replace(/\.[^/.]+$/, '');
+  function buildCustomFilename(
+    templateFilename,
+    applicationId,
+    realFile,
+    requirement
+  ) {
+    console.log('REQUIREMENT', requirement);
+    if (!applicationId || !realFile) return realFile.name;
+
+    // Use template_filename if available, otherwise fallback to document_type.name
+    let baseName = templateFilename || requirement?.document_type?.name;
+
+    if (!baseName) return realFile.name;
+
+    // Remove extension from base name (in case template_filename has one)
+    let base = baseName.replace(/\.[^/.]+$/, '');
     let ext = realFile.name.split('.').pop();
     return `${base}_${applicationId}.${ext}`;
   }
@@ -67,7 +80,8 @@ const RequirementUploadModal = ({
     const newFilename = buildCustomFilename(
       requirement.template_filename,
       applicationId,
-      file
+      file,
+      requirement
     );
 
     const fileData = await file.arrayBuffer();
@@ -253,7 +267,8 @@ const RequirementUploadModal = ({
                 {buildCustomFilename(
                   requirement.template_filename,
                   applicationId,
-                  file
+                  file,
+                  requirement
                 )}
               </div>
             )}
