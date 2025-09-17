@@ -5,7 +5,7 @@ const FooterComponent = () => {
         <div className='row'>
           <div className='col text-center text-md-left '>
             <p className='mb-0'>
-              &copy; {new Date().getFullYear()} ALI. All rights reserved.
+              &copy; {new Date().getFullYear()} PFI. All rights reserved.
             </p>
           </div>
           {/* <Col md={6} className='text-center text-md-right'>

@@ -26,7 +26,7 @@ const SendEmailComponent = ({
   const [editorState, setEditorState] = useState(() =>
     EditorState.createEmpty()
   );
-  const [subject, setSubject] = useState('Important Update from Alife');
+  const [subject, setSubject] = useState('Important Update from PFI');
   const [sending, setSending] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]); // State to hold selected files
   const [sendTo, setSendTo] = useState('');
@@ -117,7 +117,7 @@ const SendEmailComponent = ({
         if (res.status === 200) {
           console.log('Email sent successfully');
           setEditorState(EditorState.createEmpty());
-          setSubject('Important Update from Alife');
+          setSubject('Important Update from PFI');
           setSelectedFiles([]);
           setRefresh(!refresh);
           if (parseInt(application_id) <= 0) {

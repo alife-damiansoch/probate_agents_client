@@ -132,8 +132,8 @@ const NavBar = () => {
         <Link className='navbar-brand' to='/'>
           <motion.img
             id='logo'
-            src='/img/ALI logo.png'
-            alt='ALI logo'
+            src='/img/logofull.webp'
+            alt='PFI logo'
             // variants={logoVariant}
             // initial='initial'
             // animate='animate'
