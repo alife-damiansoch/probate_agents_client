@@ -411,7 +411,46 @@ const ActionsPart = ({
                 </div>
               </div>
 
-              {user &&
+              {/* Pepper Approval Required Message */}
+              {advancement.needs_pepper_approval &&
+                !advancement.is_pepper_approved && (
+                  <div
+                    className='p-3 rounded-3 mb-3'
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                      border: '1px solid #f59e0b',
+                    }}
+                  >
+                    <div className='d-flex align-items-center gap-2'>
+                      <svg
+                        width='20'
+                        height='20'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                        style={{ color: '#d97706' }}
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                      <span
+                        className='fw-semibold'
+                        style={{ color: '#92400e', fontSize: '0.9rem' }}
+                      >
+                        PEPPER approval required before finance checklist can be
+                        processed
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+              {/* Finance Section - Only show if Pepper approval is not required or already approved */}
+              {(!advancement.needs_pepper_approval ||
+                advancement.is_pepper_approved) &&
+                user &&
                 user.teams &&
                 user.teams.some((team) => team.name === 'finance') && (
                   <div>

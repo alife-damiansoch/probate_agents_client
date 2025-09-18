@@ -14,6 +14,7 @@ import renderErrors from '../../GenericFunctions/HelperGenericFunctions';
 import ActionsPart from './AdvancementsDetailsParts/ActionsPart';
 import ActualAdvancementDetailPart from './AdvancementsDetailsParts/ActualAdvancementDetailPart';
 import ApplicationDerailsReadOnlyPart from './AdvancementsDetailsParts/ApplicationDerailsReadOnlyPart';
+import PepperApprovalComponent from './AdvancementsDetailsParts/PepperApprovalComponent';
 import CommitteeApproveReject from './CommitteeComponets/CommitteeApproveReject';
 
 const AdvancementDetail = () => {
@@ -318,6 +319,14 @@ const AdvancementDetail = () => {
                 </div>
               </div>
 
+              {/* PEPPER APPROVAL */}
+              <PepperApprovalComponent
+                advancement={advancement}
+                user={user}
+                token={token}
+                setRefresh={setRefresh}
+                refresh={refresh}
+              />
               {/* Status Messages */}
               {advancement.needs_committee_approval &&
                 advancement.is_committee_approved === null && (
@@ -364,7 +373,6 @@ const AdvancementDetail = () => {
                       )}
                   </div>
                 )}
-
               {advancement.needs_committee_approval &&
                 advancement.is_committee_approved === false && (
                   <div
@@ -397,7 +405,6 @@ const AdvancementDetail = () => {
                     ></div>
                   </div>
                 )}
-
               {!advancement.is_paid_out &&
                 !(
                   advancement.needs_committee_approval &&
@@ -439,7 +446,6 @@ const AdvancementDetail = () => {
                     )}
                   </div>
                 )}
-
               {advancement.is_paid_out && (
                 <div
                   className='px-4 py-3 rounded-3 mb-3'
